@@ -2,12 +2,13 @@
 <html>
 
 <head>
-  <title>Characters</title>
+  <title>Characters - Bloodland</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="index,follow">
   <meta name="generator" content="GrapesJS Studio">
   <link rel="stylesheet" href="../css/chars.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 
 <body id="ib3c-2">
@@ -298,18 +299,18 @@ function showCharacterDetails(index) {
                     <div id="edit-origin-container" style="display:none;">${createDimensionDropdown(character['Origin Dimension'] || character.origin || '')}</div>
                 </div>
             </div>
-            <div class="form-column">
-                <div class="form-group">
-                    <label>Summary:</label>
-                    <p id="display-summary" style="white-space: pre-wrap;">${escapeHtml(character.Summary || character.summary || '')}</p>
-                    <textarea id="edit-summary" class="edit-field" style="display:none;" rows="6">${escapeHtml(character.Summary || character.summary || '')}</textarea>
-                </div>
-                <div class="form-group">
-                    <label>Image URL:</label>
-                    <p id="display-image">${escapeHtml(character.Image || character.image || '')}</p>
-                    <input type="text" id="edit-image" class="edit-field" style="display:none;" value="${escapeHtml(character.Image || character.image || '')}">
-                </div>
-            </div>
+              <div class="form-column">
+                  <div class="form-group">
+                      <label>Summary:</label>
+                      <div id="display-summary" class="markdown-content" style="white-space: normal;">${formatSummary(character.Summary || character.summary || '')}</div>
+                      <textarea id="edit-summary" class="edit-field" style="display:none;" rows="6">${escapeHtml(character.Summary || character.summary || '')}</textarea>
+                  </div>
+                  <div class="form-group">
+                      <label>Image URL:</label>
+                      <p id="display-image">${escapeHtml(character.Image || character.image || '')}</p>
+                      <input type="text" id="edit-image" class="edit-field" style="display:none;" value="${escapeHtml(character.Image || character.image || '')}">
+                  </div>
+              </div>
         </div>
     `;
 
@@ -523,6 +524,45 @@ async function deleteCharacter() {
       div.textContent = text;
       return div.innerHTML;
     }
+
+    function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ========== FUNCIONES PARA MARKDOWN ==========
+
+// Convertir Markdown a HTML (para mostrar)
+function markdownToHtml(text) {
+    if (!text) return '';
+    
+    // Configurar marked para seguridad
+    if (typeof marked !== 'undefined') {
+        marked.setOptions({
+            breaks: true,  // Convertir saltos de línea a <br>
+            gfm: true      // Habilitar GitHub Flavored Markdown
+        });
+        return marked.parse(text);
+    }
+    
+    // Fallback: solo convertir saltos de línea
+    return escapeHtml(text).replace(/\n/g, '<br>');
+}
+
+// Formatear texto para mostrar en la página
+function formatSummary(text) {
+    if (!text) return 'No summary available';
+    
+    // Intentar convertir Markdown primero
+    if (typeof marked !== 'undefined') {
+        return markdownToHtml(text);
+    }
+    
+    // Fallback: respetar saltos de línea
+    return escapeHtml(text).replace(/\n/g, '<br>');
+}
 
     // ==================== INICIALIZACIÓN ====================
     

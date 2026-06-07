@@ -446,6 +446,112 @@ body {
   padding: 50px;
 }
 
+/* ========== ESTILOS PARA MARKDOWN EN SUMMARY ========== */
+.markdown-content {
+    line-height: 1.6;
+    font-size: 16px;
+    color: #e8e8e8;
+    background: rgba(0,0,0,0.2);
+    padding: 8px;
+    border-radius: 4px;
+    margin: 5px 0;
+    max-height: 300px;
+    overflow-y: auto;
+    white-space: normal;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3 {
+    color: rgb(255, 200, 99);
+    margin-top: 16px;
+    margin-bottom: 8px;
+}
+
+.markdown-content h1 { font-size: 1.5em; }
+.markdown-content h2 { font-size: 1.3em; }
+.markdown-content h3 { font-size: 1.1em; }
+
+.markdown-content p {
+    margin-bottom: 12px;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+    margin-left: 20px;
+    margin-bottom: 12px;
+}
+
+.markdown-content li {
+    margin-bottom: 4px;
+}
+
+.markdown-content strong {
+    color: #ffa07a;
+    font-weight: bold;
+}
+
+.markdown-content em {
+    font-style: italic;
+}
+
+.markdown-content code {
+    background: rgba(0,0,0,0.4);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 14px;
+}
+
+.markdown-content pre {
+    background: rgba(0,0,0,0.4);
+    padding: 12px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 12px 0;
+}
+
+.markdown-content blockquote {
+    border-left: 3px solid rgb(143, 33, 110);
+    margin: 12px 0;
+    padding-left: 16px;
+    color: #ccc;
+    font-style: italic;
+}
+
+.markdown-content a {
+    color: #ffa07a;
+    text-decoration: none;
+}
+
+.markdown-content a:hover {
+    text-decoration: underline;
+}
+
+.markdown-content hr {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.2);
+    margin: 16px 0;
+}
+
+.markdown-content table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 12px 0;
+}
+
+.markdown-content th,
+.markdown-content td {
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 8px;
+    text-align: left;
+}
+
+.markdown-content th {
+    background: rgba(0,0,0,0.3);
+    font-weight: bold;
+}
+
 /* Estilos responsive */
 @media (max-width: 768px) {
   .navbar-items-c {

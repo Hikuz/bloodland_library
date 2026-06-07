@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Universes - Bloodland</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="index,follow">
+  <meta name="generator" content="GrapesJS Studio">
+  <link rel="stylesheet" href="../css/universes.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script> 
+</head>
+
+<body id="ib3c-2-2">
+  <div id="irjn-2-2" class="navbar">
+    <div data-gjs="navbar" id="ixw3-2-2" class="navbar-container">
+      <div id="i6ril-2-2" class="navbar-burger">
+        <div class="navbar-burger-line"></div>
+        <div class="navbar-burger-line"></div>
+        <div class="navbar-burger-line"></div>
+      </div>
+      <div data-gjs="navbar-items" class="navbar-items-c">
+        <nav id="ipns3-2-2" class="navbar-menu">
+          <a id="isc29-2-2" href="chars.html" title="chars" class="navbar-menu-link">Characters</a>
+          <a id="i9zce-2-2" href="universes.html" title="universes" class="navbar-menu-link">Universes</a>
+          <a id="iggxa-2-2" title="lore" href="lore.html" class="navbar-menu-link">Lore</a>
+          <a id="ikeje-2-2" href="../index.html" title="main" class="navbar-menu-link">Main</a>
+        </nav>
+      </div>
+    </div>
+  </div>
+
+  <!-- Universes Container -->
+  <div id="universes-container" class="universes-container">
+    <div class="loading">Loading universes...</div>
+  </div>
+
+  <!-- Modal for Universe CRUD -->
+  <div id="universeModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <h2 id="modalTitle">Universe Details</h2>
+      <div id="modalBody"></div>
+      <div class="modal-buttons">
+        <button class="btn btn-warning" id="editBtn" onclick="enableEditMode()">Edit</button>
+        <button class="btn btn-danger" onclick="deleteUniverse()">Delete</button>
+        <button class="btn btn-primary" onclick="closeModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Location CRUD -->
+  <div id="locationModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeLocationModal()">&times;</span>
+      <h2 id="locationModalTitle">Location Details</h2>
+      <div id="locationModalBody"></div>
+      <div class="modal-buttons">
+        <button class="btn btn-warning" id="editLocationBtn" onclick="enableLocationEditMode()">Edit</button>
+        <button class="btn btn-danger" onclick="deleteLocation()">Delete</button>
+        <button class="btn btn-primary" onclick="closeLocationModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    
+    // ==================== CONFIGURACIÓN DE BASEROW ====================
+    const BASEROW_API_TOKEN = "2KktnPZd4vjoH5MzdptCNalA9cWML1et";
+    const BASEROW_DATABASE_ID = "460686";
+    const BASEROW_TABLE_ID = "1015116"; // tabla de ubicaciones
+    
+    const BASEROW_API_BASE = `https://api.baserow.io/api/database/rows/table/${BASEROW_TABLE_ID}/`;
+    const BASEROW_API_PARAMS = `?user_field_names=true`;
+    const BASEROW_API_URL = `${BASEROW_API_BASE}${BASEROW_API_PARAMS}`;
+    
+    let currentLocations = [];
+    let currentUniverses = []; // Para almacenar dimensiones únicas
+    let currentLocationIndex = null;
+    let currentUniverseName = null;
+    let isEditMode = false;
+    let isLocationEditMode = false;
+
+    // ==================== UNIVERSOS FIJOS (estáticos) ====================
+const FIXED_UNIVERSES = [
+  {
+    name: "Mythyko",
+    description: "With tragedies that got carried over time (See ancient Mythyko), the story of Mythyko focuses mostly on conflicts between races, specially the humankind, beast people and faerans. Humans are the main dominant race on this planet while kitsunes are seen as misfortune creatures in this universe, which is why most people despise them."
+  },
+  {
+    name: "Contronus",
+    description: "A dimension where time is fractured, allowing glimpses of past and future. Temporal guardians protect the timeline from those who would alter history. Steam-powered cities exist alongside medieval kingdoms in this paradoxical realm."
+  },
+  {
+    name: "Prosperon",
+    description: "A universe that has had a brutal history, it had tons of dark ages as people constantly fought over who was worthy of wielding the various artifacts which would grant profound power. The artifacts are (and still are) an important pillar of their life as some of them can change the course of history or have society form around them, over time more and more artifacts were discovered, but now it seems like everyone’s on an equal playing field. And peace had been finally set in as the nations all marked their borders and somehow had peace although it was uneasy. But one race is constantly scapegoated. Kitsunes are praised in this universe due to their wonderful appearance and incredible power."
+  },
+  {
+    name: "Destroxyth",
+    description: "A goddess who’s too arrogant to properly manage her own universe, as she selfishly seeks her own goal of uniting all the universes"
+  },
+  {
+    name: "Perfrecture",
+    description: "An universe with a wormhole as a core, accessible through the large canyons dividing each region.	This universe has lacked a goddess and resources for survival for ages, with the arrival of strange space amalgams through the abyss."
+  },
+  {
+    name: "Mythoka",
+    description: "An aborted universe caused by her selfish goddess."
+  },
+    {
+    name: "???",
+    description: "Locations lost to space and time, not related to any known universe."
+  }
+];
+
+    // ==================== FUNCIONES AUXILIARES ====================
+    
+    async function fetchBaserow(url, options = {}) {
+      const defaultOptions = {
+        headers: {
+          'Authorization': `Token ${BASEROW_API_TOKEN}`,
+          'Content-Type': 'application/json'
+        }
+      };
+      
+      const mergedOptions = {
+        ...defaultOptions,
+        ...options,
+        headers: {
+          ...defaultOptions.headers,
+          ...options.headers
+        }
+      };
+      
+      const response = await fetch(url, mergedOptions);
+      return response;
+    }
+
+// Obtener todas las ubicaciones
+async function fetchLocations() {
+  const container = document.getElementById('universes-container');
+  try {
+    container.innerHTML = '<div class="loading">Loading locations...</div>';
+    
+    let allLocations = [];
+    let nextUrl = BASEROW_API_URL;
+    
+    while (nextUrl) {
+      const secureUrl = nextUrl.replace('http://', 'https://');
+      const response = await fetchBaserow(secureUrl);
+      if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+      
+      const data = await response.json();
+      allLocations = allLocations.concat(data.results || []);
+      nextUrl = data.next ? data.next.replace('http://', 'https://') : null;
+    }
+    
+    currentLocations = allLocations;
+
+    displayUniverses();
+    
+  } catch (error) {
+    console.error('Error:', error);
+    container.innerHTML = '<div class="error">Error loading locations!</div>';
+  }
+}
+
+// Mostrar universos fijos + locations desde la base de datos
+function displayUniverses() {
+  const container = document.getElementById('universes-container');
+  
+  // Usar los universos fijos en lugar de los de la base de datos
+  if (!FIXED_UNIVERSES || FIXED_UNIVERSES.length === 0) {
+    container.innerHTML = '<div class="error">No universes found</div>';
+    return;
+  }
+
+  let universesHTML = '';
+  
+  // Iterar sobre los universos fijos
+  FIXED_UNIVERSES.forEach(universe => {
+    const dimensionName = universe.name;
+    
+    // Buscar locations que pertenezcan a este universo en la base de datos
+    const locationsInDimension = currentLocations.filter(loc => loc.Dimension === dimensionName);
+    
+    // Construir lista de ubicaciones/razas
+    let locationsList = '';
+    if (locationsInDimension.length > 0) {
+      locationsInDimension.forEach(location => {
+            // Usar formatDescription para mostrar Markdown
+            const formattedDesc = formatDescription(location.Description || 'No description');
+            
+            locationsList += `
+                <div class="location-item" onclick="event.stopPropagation(); showLocationDetails(${currentLocations.indexOf(location)})">
+                    <div class="location-name">${escapeHtml(location.Name || 'Unnamed')}</div>
+                    <div class="location-description">${formattedDesc}</div>
+                    ${location.Races ? `<div class="location-races">Races: ${escapeHtml(location.Races)}</div>` : ''}
+                </div>
+            `;
+        });
+    } else {
+      locationsList = '<div class="no-locations">No locations added yet. Click "Add Location" to add.</div>';
+    }
+    
+    universesHTML += `
+      <div class="universe-card" data-dimension="${escapeHtml(dimensionName)}">
+        <div class="universe-header">
+          <div class="universe-name">${escapeHtml(dimensionName)}</div>
+        </div>
+        <div class="universe-description">${escapeHtml(universe.description)}</div>
+        <div class="locations-section">
+          <div class="locations-title">Locations:</div>
+          <div class="locations-list">
+            ${locationsList}
+          </div>
+          <button class="btn-add-location" onclick="event.stopPropagation(); openAddLocationModal('${escapeHtml(dimensionName)}')">+ Add Location</button>
+        </div>
+      </div>
+    `;
+  });
+  
+  container.innerHTML = universesHTML;
+}
+    
+    // ==================== CRUD PARA UBICACIONES ====================
+    // Función para crear checkboxes de Races (selección múltiple)
+function createRacesCheckboxes(currentValue) {
+  const raceOptions = ['Humans', 'Mythicals', 'Beast People', 'Faerans', 'Rift Abominations']; // Races of the select box
+  // Convertir el valor actual (ej: "Humans, Kitsunes") en un array
+  const selectedRaces = currentValue ? currentValue.split(',').map(s => s.trim()) : [];
+  
+  let html = `<div id="edit-races-container" class="races-checkbox-group">`;
+  raceOptions.forEach(race => {
+    const isChecked = selectedRaces.includes(race);
+    html += `
+      <label class="race-checkbox">
+        <input type="checkbox" value="${race}" ${isChecked ? 'checked' : ''} onchange="updateRacesValue()">
+        ${race}
+      </label>
+    `;
+  });
+  html += `</div>`;
+  html += `<input type="hidden" id="edit-races-value" value="${currentValue || ''}">`;
+  return html;
+}
+
+// Función para actualizar el valor concatenado de Races
+function updateRacesValue() {
+  const checkboxes = document.querySelectorAll('#edit-races-container input[type="checkbox"]');
+  const selectedRaces = [];
+  checkboxes.forEach(cb => {
+    if (cb.checked) selectedRaces.push(cb.value);
+  });
+  const racesValue = selectedRaces.join(', ');
+  const hiddenInput = document.getElementById('edit-races-value');
+  if (hiddenInput) hiddenInput.value = racesValue;
+}
+
+// Función auxiliar para obtener el valor de Races
+function getRacesValue() {
+  const hiddenInput = document.getElementById('edit-races-value');
+  return hiddenInput ? hiddenInput.value : '';
+}
+    
+function openAddLocationModal(dimensionName) {
+  currentUniverseName = dimensionName || '';
+  isLocationEditMode = true;
+  currentLocationIndex = null;
+  
+  const modalBody = document.getElementById('locationModalBody');
+  modalBody.innerHTML = `
+    <div class="form-two-columns">
+      <div class="form-column">
+        <div class="form-group">
+          <label>Universe/Dimension:</label>
+          <input type="text" id="edit-dimension" value="${escapeHtml(currentUniverseName)}" readonly style="background-color:#555; cursor:not-allowed;">
+        </div>
+        <div class="form-group">
+          <label>Name/Location *:</label>
+          <input type="text" id="edit-name" placeholder="e.g., Human Kingdoms, Kitsune Villages">
+        </div>
+        <div class="form-group">
+          <label>Races (select multiple):</label>
+          ${createRacesCheckboxes('')}
+        </div>
+      </div>
+      <div class="form-column">
+        <div class="form-group">
+          <label>Description:</label>
+          <textarea id="edit-description" rows="8" placeholder="Describe this location or race..."></textarea>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('locationModal').style.display = 'block';
+  document.getElementById('locationModalTitle').textContent = 'Add Location';
+  document.getElementById('editLocationBtn').textContent = 'Save';
+  document.getElementById('editLocationBtn').onclick = saveNewLocation;
+}
+    
+function showLocationDetails(index) {
+  const location = currentLocations[index];
+  currentLocationIndex = index;
+  currentUniverseName = location.Dimension;
+  isLocationEditMode = false;
+  
+  const modalBody = document.getElementById('locationModalBody');
+  modalBody.innerHTML = `
+    <div class="form-two-columns">
+      <div class="form-column">
+        <div class="form-group">
+          <label>Universe/Dimension:</label>
+          <p id="display-dimension" class="scrollable-text">${escapeHtml(location.Dimension || '')}</p>
+          <input type="text" id="edit-dimension" style="display:none;" value="${escapeHtml(location.Dimension || '')}" readonly>
+        </div>
+        <div class="form-group">
+          <label>Name/Location:</label>
+          <p id="display-name" class="scrollable-text">${escapeHtml(location.Name || '')}</p>
+          <input type="text" id="edit-name" style="display:none;" value="${escapeHtml(location.Name || '')}">
+        </div>
+        <div class="form-group">
+          <label>Races:</label>
+          <p id="display-races" class="scrollable-text">${escapeHtml(location.Races || '')}</p>
+          <div id="edit-races-container" style="display:none;">${createRacesCheckboxes(location.Races || '')}</div>
+          <input type="hidden" id="edit-races-value" value="${escapeHtml(location.Races || '')}">
+        </div>
+      </div>
+      <div class="form-column">
+        <div class="form-group">
+            <label>Description:</label>
+            <div id="display-description" class="scrollable-text markdown-content">${formatDescription(location.Description || '')}</div>
+            <textarea id="edit-description" style="display:none;" rows="10">${escapeHtml(location.Description || '')}</textarea>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('locationModal').style.display = 'block';
+  document.getElementById('locationModalTitle').textContent = 'Location Details';
+  document.getElementById('editLocationBtn').style.display = 'inline-block';
+  document.getElementById('editLocationBtn').textContent = 'Edit';
+  document.getElementById('editLocationBtn').onclick = enableLocationEditMode;
+}
+    
+function enableLocationEditMode() {
+  if (isLocationEditMode) return;
+  isLocationEditMode = true;
+  
+  // Ocultar párrafos y mostrar inputs en la columna izquierda
+  const leftFields = ['name'];
+  leftFields.forEach(field => {
+    const displayElem = document.getElementById(`display-${field}`);
+    const editElem = document.getElementById(`edit-${field}`);
+    if (displayElem && editElem) {
+      displayElem.style.display = 'none';
+      editElem.style.display = 'block';
+    }
+  });
+  
+  // Manejar descripción (columna derecha)
+  const displayDesc = document.getElementById('display-description');
+  const editDesc = document.getElementById('edit-description');
+  if (displayDesc && editDesc) {
+    displayDesc.style.display = 'none';
+    editDesc.style.display = 'block';
+  }
+  
+  // Mostrar checkboxes de races, ocultar texto
+  const displayRaces = document.getElementById('display-races');
+  const editRacesContainer = document.getElementById('edit-races-container');
+  if (displayRaces && editRacesContainer) {
+    displayRaces.style.display = 'none';
+    editRacesContainer.style.display = 'block';
+  }
+  
+  // Dimension no se edita, solo se muestra
+  const displayDim = document.getElementById('display-dimension');
+  const editDim = document.getElementById('edit-dimension');
+  if (displayDim && editDim) {
+    displayDim.style.display = 'block';
+    editDim.style.display = 'none';
+  }
+  
+  document.getElementById('editLocationBtn').textContent = '💾 Save';
+  document.getElementById('editLocationBtn').onclick = saveLocationEdit;
+}
+    
+async function saveNewLocation() {
+  const newLocation = {
+    'Dimension': document.getElementById('edit-dimension').value,
+    'Name': document.getElementById('edit-name').value,
+    'Description': document.getElementById('edit-description').value,
+    'Races': getRacesValue()
+  };
+  
+  if (!newLocation.Name) {
+    alert('Location name is required');
+    return;
+  }
+  
+  if (!newLocation.Dimension) {
+    alert('Dimension is required');
+    return;
+  }
+  
+  try {
+    const response = await fetchBaserow(BASEROW_API_URL, {
+      method: 'POST',
+      body: JSON.stringify(newLocation)
+    });
+    
+    if (response.ok) {
+      alert('Location added successfully');
+      await fetchLocations();
+      closeLocationModal();
+    } else {
+      throw new Error('Error adding location');
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    alert('Error adding location');
+  }
+}
+
+async function saveLocationEdit() {
+  const locationId = currentLocations[currentLocationIndex].id;
+  
+  const updatedLocation = {
+    'Dimension': document.getElementById('edit-dimension').value,
+    'Name': document.getElementById('edit-name').value,
+    'Description': document.getElementById('edit-description').value,
+    'Races': getRacesValue()
+  };
+  
+  const url = `${BASEROW_API_BASE}${locationId}/${BASEROW_API_PARAMS}`;
+  
+  try {
+    const response = await fetchBaserow(url, {
+      method: 'PATCH',
+      body: JSON.stringify(updatedLocation)
+    });
+    
+    if (response.ok) {
+      alert('Location updated successfully');
+      await fetchLocations();
+      closeLocationModal();
+    } else {
+      throw new Error('Error updating location');
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    alert('Error updating location');
+  }
+}
+    
+    async function deleteLocation() {
+      if (confirm('Are you sure you want to delete this location?')) {
+        const locationId = currentLocations[currentLocationIndex].id;
+        const url = `${BASEROW_API_BASE}${locationId}/${BASEROW_API_PARAMS}`;
+        
+        try {
+          const response = await fetchBaserow(url, { method: 'DELETE' });
+          
+          if (response.ok) {
+            alert('Location deleted successfully');
+            await fetchLocations();
+            closeLocationModal();
+          } else {
+            throw new Error('Error deleting location');
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          alert('Error deleting location');
+        }
+      }
+    }
+    
+    // ==================== MODAL CONTROLS ====================
+    
+    function closeModal() {
+      document.getElementById('universeModal').style.display = 'none';
+      isEditMode = false;
+      currentUniverseName = null;
+    }
+    
+    function closeLocationModal() {
+      document.getElementById('locationModal').style.display = 'none';
+      isLocationEditMode = false;
+      currentLocationIndex = null;
+    }
+    
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Convertir Markdown a HTML (para mostrar)
+function markdownToHtml(text) {
+    if (!text) return '';
+    
+    // Configurar marked para seguridad
+    if (typeof marked !== 'undefined') {
+        marked.setOptions({
+            breaks: true,  // Convertir saltos de línea a <br>
+            gfm: true      // Habilitar GitHub Flavored Markdown
+        });
+        return marked.parse(text);
+    }
+    
+    // Fallback: solo convertir saltos de línea
+    return escapeHtml(text).replace(/\n/g, '<br>');
+}
+
+// Formatear texto para mostrar en la página
+function formatDescription(text) {
+    if (!text) return 'No description';
+    
+    // Intentar convertir Markdown primero
+    if (typeof marked !== 'undefined') {
+        return markdownToHtml(text);
+    }
+    
+    // Fallback: respetar saltos de línea
+    return escapeHtml(text).replace(/\n/g, '<br>');
+}
+    
+    // ==================== INICIALIZACIÓN ====================
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchLocations();
+      
+      window.onclick = function(event) {
+        const universeModal = document.getElementById('universeModal');
+        const locationModal = document.getElementById('locationModal');
+        if (event.target === universeModal) closeModal();
+        if (event.target === locationModal) closeLocationModal();
+      };
+    });
+    
+    // ==================== HAMBURGER MENU ====================
+    var items = document.querySelectorAll('#i6ril-2-2');
+    for (var i = 0, len = items.length; i < len; i++) {
+      (function() {
+        var n, t = this, e = 'gjs-collapse', a = 'max-height', o = 0, i = function() {
+          var n = document.createElement('void'), t = {
+            transition: 'transitionend',
+            OTransition: 'oTransitionEnd',
+            MozTransition: 'transitionend',
+            WebkitTransition: 'webkitTransitionEnd'
+          };
+          for (var e in t) if (void 0 !== n.style[e]) return t[e]
+        }(), r = function(n) {
+          o = 1;
+          var t = function(n) {
+            var t = window.getComputedStyle(n),
+              e = t.display,
+              o = parseInt(t[a]);
+            if ('none' !== e && 0 !== o) return n.offsetHeight;
+            n.style.height = 'auto', n.style.display = 'block', n.style.position = 'absolute', n.style.visibility = 'hidden';
+            var i = n.offsetHeight;
+            return n.style.height = '', n.style.display = '', n.style.position = '', n.style.visibility = '', i
+          }(n),
+            e = n.style;
+          e.display = 'block', e.transition = "".concat(a, " 0.25s ease-in-out"), e.overflowY = 'hidden', '' == e[a] && (e[a] = 0), 0 == parseInt(e[a]) ? (e[a] = '0', setTimeout((function() {
+            e[a] = t + 'px'
+          }), 10)) : e[a] = '0'
+        };
+        e in t || t.addEventListener('click', (function(e) {
+          if (e.preventDefault(), !o) {
+            var l = t.closest("[data-gjs=navbar]"),
+              c = null == l ? void 0 : l.querySelector("[data-gjs=navbar-items]");
+            c && r(c), n || (null == c || c.addEventListener(i, (function() {
+              o = 0;
+              var n = c.style;
+              0 == parseInt(n[a]) && (n.display = '', n[a] = '')
+            })), n = 1)
+          }
+        })), t[e] = 1
+      }.bind(items[i]));
+    }
+  </script>
+</body>
+
+</html>
