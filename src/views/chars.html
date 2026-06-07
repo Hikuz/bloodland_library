@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <title>Chars</title>
+  <title>Characters</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="index,follow">
@@ -19,43 +19,423 @@
         <div class="navbar-burger-line"></div>
       </div>
       <div data-gjs="navbar-items" class="navbar-items-c">
-        <nav id="ipns3-2" class="navbar-menu"><a id="isc29-2" href="chars.html" title="chars"
-            class="navbar-menu-link">Characters</a><a id="i9zce-2" title="universes" href="universes.html"
-            class="navbar-menu-link">Universes</a><a id="iggxa-2" title="lore" href="lore.html"
-            class="navbar-menu-link">Lore</a><a id="ikeje-2" href="../index.html" title="index" customAttributes=""
-            class="navbar-menu-link">Main</a></nav>
+        <nav id="ipns3-2" class="navbar-menu">
+          <a id="isc29-2" href="chars.html" title="characters" class="navbar-menu-link">Characters</a>
+          <a id="i9zce-2" title="universes" href="universes.html" class="navbar-menu-link">Universes</a>
+          <a id="iggxa-2" title="lore" href="lore.html" class="navbar-menu-link">Lore</a>
+          <a id="ikeje-2" href="../index.html" title="main" class="navbar-menu-link">Main</a>
+        </nav>
       </div>
     </div>
   </div>
-  <div id="iilo-2-2">
-    <div id="iilo-2-2-2">
-      <div class="gjs-image-box" id="io6kqx"></div>
-      <div id="ikrex-2-2-2">Blood</div>
-    </div>
-    <div id="iilo-2-2-2-5">
-      <div class="gjs-image-box" id="ikv1dj"></div>
-      <div id="ikrex-2-2-2-5">Blood</div>
-    </div>
-    <div id="iilo-2-2-2-4">
-      <div class="gjs-image-box" id="i17fwi"></div>
-      <div id="ikrex-2-2-2-4">Blood</div>
-    </div>
-    <div id="iilo-2-2-2-3">
-      <div class="gjs-image-box" id="iz4utt"></div>
-      <div id="ikrex-2-2-2-3">Blood</div>
-    </div>
-    <div id="iilo-2-2-2-2">
-      <div class="gjs-image-box" id="iu7lv7"></div>
-      <div id="ikrex-2-2-2-2">Blood</div>
+
+  <!-- Controls Bar -->
+  <div class="controls-bar">
+    <button class="btn btn-primary" onclick="openAddModal()">Add Character</button>
+    <div class="filter-group">
+      <button class="filter-btn" onclick="filterCharacters('name')">Sort by Name</button>
+      <button class="filter-btn" onclick="filterCharacters('part')">Sort by Story part</button>
+      <button class="filter-btn" onclick="filterCharacters('character role')">Sort by Role</button>
+      <button class="filter-btn" onclick="filterCharacters('designer')">Sort by Creator</button>
+      <button class="filter-btn" onclick="resetFilter()">Reset filters</button>
     </div>
   </div>
+
+  <!-- Characters Container -->
+  <div id="characters-container" class="characters-grid">
+    <div class="loading">Loading characters...</div>
+  </div>
+
+  <!-- Modal for viewing/editing character -->
+  <div id="characterModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <h2 id="modalTitle">Character Details</h2>
+      <div id="modalBody"></div>
+      <div class="modal-buttons">
+        <button class="btn btn-warning" id="editBtn" onclick="enableEditMode()">Edit</button>
+        <button class="btn btn-danger" onclick="deleteCharacter()">Delete</button>
+        <button class="btn btn-primary" onclick="closeModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    var items = document.querySelectorAll('#i6ril-2');
-          for (var i = 0, len = items.length; i < len; i++) {
-            (function(){
-var n,t=this,e='gjs-collapse',a='max-height',o=0,i=function(){var n=document.createElement('void'),t={transition:'transitionend',OTransition:'oTransitionEnd',MozTransition:'transitionend',WebkitTransition:'webkitTransitionEnd'};for(var e in t)if(void 0!==n.style[e])return t[e]}(),r=function(n){o=1;var t=function(n){var t=window.getComputedStyle(n),e=t.display,o=parseInt(t[a]);if('none'!==e&&0!==o)return n.offsetHeight;n.style.height='auto',n.style.display='block',n.style.position='absolute',n.style.visibility='hidden';var i=n.offsetHeight;return n.style.height='',n.style.display='',n.style.position='',n.style.visibility='',i}(n),e=n.style;e.display='block',e.transition="".concat(a," 0.25s ease-in-out"),e.overflowY='hidden',''==e[a]&&(e[a]=0),0==parseInt(e[a])?(e[a]='0',setTimeout((function(){e[a]=t+'px'}),10)):e[a]='0'};e in t||t.addEventListener('click',(function(e){if(e.preventDefault(),!o){var l=t.closest("[data-gjs=navbar]"),c=null==l?void 0:l.querySelector("[data-gjs=navbar-items]");c&&r(c),n||(null==c||c.addEventListener(i,(function(){o=0;var n=c.style;0==parseInt(n[a])&&(n.display='',n[a]='')})),n=1)}})),t[e]=1
-}.bind(items[i]))();
+    // SHEETDB configuration
+    const SHEETDB_API_URL = "https://sheetdb.io/api/v1/r2qb056vsvy9w";
+    let currentCharacters = [];
+    let currentFilter = null;
+    let currentCharacterIndex = null;
+    let isEditMode = false;
+
+    // Fetch characters
+    async function fetchCharacters() {
+      const container = document.getElementById('characters-container');
+      try {
+        container.innerHTML = '<div class="loading">Loading characters...</div>';
+        const response = await fetch(SHEETDB_API_URL);
+        if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+        currentCharacters = await response.json();
+        displayCharacters(currentCharacters);
+      } catch (error) {
+        console.error('Error:', error);
+        container.innerHTML = '<div class="error">Error loading characters!</div>';
+      }
+    }
+
+    // Display characters with enhanced cards
+    function displayCharacters(characters) {
+      const container = document.getElementById('characters-container');
+      if (!characters || characters.length === 0) {
+        container.innerHTML = '<div class="error">No characters found</div>';
+        return;
+      }
+
+      let charactersHTML = '';
+      characters.forEach((character, index) => {
+        const name = character.Name || character.name || 'No name';
+        const role = character['Character Role'] || character.role || 'Undefined';
+        const dimension = character['Origin Dimension'] || character.origin || 'Unknown';
+        const part = character.Part || character.part || 'Undefined';
+        const designer = character.Designer || character.designer || 'Undefined';
+        const summary = character.Summary || character.summary || 'No description available';
+        const imageUrl = character.Image || character.image || 'https://i.pinimg.com/474x/19/e1/56/19e156dd3f2d29d0b5e8b081729abe9b.jpg';
+
+        charactersHTML += `
+          <div class="character-card" onclick="showCharacterDetails(${index})">
+            <div class="character-card-inner">
+              <img class="character-image" src="${imageUrl}" alt="${escapeHtml(name)}" onerror="this.src='https://i.pinimg.com/474x/19/e1/56/19e156dd3f2d29d0b5e8b081729abe9b.jpg'">
+              <div class="character-info">
+                <div class="character-name">${escapeHtml(name)}</div>
+                <div class="character-role">${escapeHtml(role)}</div>
+                <div class="character-details">
+                  <div class="character-dimension">Dimension: ${escapeHtml(dimension)}</div>
+                  <div class="character-part">${escapeHtml(part)}</div>
+                </div>
+                <div class="character-designer">Creator: ${escapeHtml(designer)}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = charactersHTML;
+    }
+
+    // Filter characters
+    function filterCharacters(field) {
+      const sorted = [...currentCharacters].sort((a, b) => {
+        let valA = (a[field] || a[getFieldMapping(field)] || '').toLowerCase();
+        let valB = (b[field] || b[getFieldMapping(field)] || '').toLowerCase();
+        return valA.localeCompare(valB);
+      });
+      currentFilter = field;
+      displayCharacters(sorted);
+
+      // Mark active button
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+
+    function resetFilter() {
+      displayCharacters(currentCharacters);
+      currentFilter = null;
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    }
+
+    function getFieldMapping(field) {
+      const mappings = {
+        'character role': 'Character Role',
+        'name': 'Name',
+        'part': 'Part',
+        'summary': 'Summary',
+        'designer': 'Designer'
+      };
+      return mappings[field] || field;
+    }
+
+// Show character details
+function showCharacterDetails(index) {
+  const character = currentCharacters[index];
+  currentCharacterIndex = index;
+  isEditMode = false;
+
+  const modalBody = document.getElementById('modalBody');
+  modalBody.innerHTML = `
+    <div class="form-two-columns">
+      <div class="form-column">
+        <div class="form-group">
+          <label>Name:</label>
+          <p id="display-name">${escapeHtml(character.Name || character.name || '')}</p>
+          <input type="text" id="edit-name" style="display:none;" value="${escapeHtml(character.Name || character.name || '')}">
+        </div>
+        <div class="form-group">
+          <label>Role:</label>
+          <p id="display-role">${escapeHtml(character['Character Role'] || character.role || '')}</p>
+          <input type="text" id="edit-role" style="display:none;" value="${escapeHtml(character['Character Role'] || character.role || '')}">
+        </div>
+        <div class="form-group">
+          <label>Part:</label>
+          <p id="display-part">${escapeHtml(character.Part || character.part || '')}</p>
+          <input type="text" id="edit-part" style="display:none;" value="${escapeHtml(character.Part || character.part || '')}">
+        </div>
+        <div class="form-group">
+          <label>Designer:</label>
+          <p id="display-designer">${escapeHtml(character.Designer || character.designer || '')}</p>
+          <input type="text" id="edit-designer" style="display:none;" value="${escapeHtml(character.Designer || character.designer || '')}">
+        </div>
+        <div class="form-group">
+          <label>Origin Dimension:</label>
+          <p id="display-origin">${escapeHtml(character['Origin Dimension'] || character.origin || '')}</p>
+          <input type="text" id="edit-origin" style="display:none;" value="${escapeHtml(character['Origin Dimension'] || character.origin || '')}">
+        </div>
+      </div>
+      <div class="form-column">
+        <div class="form-group">
+          <label>Summary:</label>
+          <p id="display-summary" style="white-space: pre-wrap;">${escapeHtml(character.Summary || character.summary || '')}</p>
+          <textarea id="edit-summary" style="display:none;" rows="6">${escapeHtml(character.Summary || character.summary || '')}</textarea>
+        </div>
+        <div class="form-group">
+          <label>Image URL:</label>
+          <p id="display-image">${escapeHtml(character.Image || character.image || '')}</p>
+          <input type="text" id="edit-image" style="display:none;" value="${escapeHtml(character.Image || character.image || '')}">
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('characterModal').style.display = 'block';
+  document.getElementById('editBtn').style.display = 'inline-block';
+  document.getElementById('modalTitle').textContent = 'Character Details';
+}
+
+    function enableEditMode() {
+      if (isEditMode) return;
+      isEditMode = true;
+
+      // Hide paragraphs and show inputs
+      const displayFields = ['name', 'role', 'part', 'designer', 'origin', 'summary', 'image'];
+      displayFields.forEach(field => {
+        const displayElem = document.getElementById(`display-${field}`);
+        const editElem = document.getElementById(`edit-${field}`);
+        if (displayElem && editElem) {
+          displayElem.style.display = 'none';
+          editElem.style.display = 'block';
+        }
+      });
+
+      document.getElementById('editBtn').textContent = '💾 Save';
+      document.getElementById('editBtn').onclick = saveEdit;
+    }
+
+    async function saveEdit() {
+      const updatedCharacter = {
+        'Name': document.getElementById('edit-name').value,
+        'Character Role': document.getElementById('edit-role').value,
+        'Part': document.getElementById('edit-part').value,
+        'Designer': document.getElementById('edit-designer').value,
+        'Origin Dimension': document.getElementById('edit-origin').value,
+        'Summary': document.getElementById('edit-summary').value,
+        'Image': document.getElementById('edit-image').value
+      };
+
+      const rowId = currentCharacters[currentCharacterIndex].id || currentCharacters[currentCharacterIndex].rowIndex;
+
+      try {
+        const response = await fetch(`${SHEETDB_API_URL}/id/${rowId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedCharacter)
+        });
+
+        if (response.ok) {
+          alert('Character updated successfully');
+          await fetchCharacters();
+          closeModal();
+        } else {
+          throw new Error('Error updating character');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error updating character');
+      }
+    }
+
+    async function deleteCharacter() {
+      if (confirm('Are you sure you want to delete this character? This action cannot be undone.')) {
+        const rowId = currentCharacters[currentCharacterIndex].id || currentCharacters[currentCharacterIndex].rowIndex;
+
+        try {
+          const response = await fetch(`${SHEETDB_API_URL}/id/${rowId}`, {
+            method: 'DELETE'
+          });
+
+          if (response.ok) {
+            alert('Character deleted successfully');
+            await fetchCharacters();
+            closeModal();
+          } else {
+            throw new Error('Error deleting character');
           }
+        } catch (error) {
+          console.error('Error:', error);
+          alert('Error deleting character');
+        }
+      }
+    }
+
+// Open modal to add character
+function openAddModal() {
+  currentCharacterIndex = null;
+  isEditMode = true;
+
+  const modalBody = document.getElementById('modalBody');
+  modalBody.innerHTML = `
+    <div class="form-two-columns">
+      <div class="form-column">
+        <div class="form-group">
+          <label>Name *:</label>
+          <input type="text" id="edit-name" value="">
+        </div>
+        <div class="form-group">
+          <label>Role:</label>
+          <input type="text" id="edit-role" value="">
+        </div>
+        <div class="form-group">
+          <label>Part:</label>
+          <input type="text" id="edit-part" value="">
+        </div>
+        <div class="form-group">
+          <label>Designer:</label>
+          <input type="text" id="edit-designer" value="">
+        </div>
+        <div class="form-group">
+          <label>Origin Dimension:</label>
+          <input type="text" id="edit-origin" value="">
+        </div>
+      </div>
+      <div class="form-column">
+        <div class="form-group">
+          <label>Summary:</label>
+          <textarea id="edit-summary" rows="6" style="min-height: 150px;"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Image URL:</label>
+          <input type="text" id="edit-image" value="">
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('characterModal').style.display = 'block';
+  document.getElementById('modalTitle').textContent = 'Add Character';
+  document.getElementById('editBtn').textContent = '💾 Save';
+  document.getElementById('editBtn').onclick = saveNewCharacter;
+}
+
+    async function saveNewCharacter() {
+      const newCharacter = {
+        'Name': document.getElementById('edit-name').value,
+        'Character Role': document.getElementById('edit-role').value,
+        'Part': document.getElementById('edit-part').value,
+        'Designer': document.getElementById('edit-designer').value,
+        'Origin Dimension': document.getElementById('edit-origin').value,
+        'Summary': document.getElementById('edit-summary').value,
+        'Image': document.getElementById('edit-image').value
+      };
+
+      if (!newCharacter.Name) {
+        alert('Name is required');
+        return;
+      }
+
+      try {
+        const response = await fetch(SHEETDB_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newCharacter)
+        });
+
+        if (response.ok) {
+          alert('Character added successfully');
+          await fetchCharacters();
+          closeModal();
+        } else {
+          throw new Error('Error adding character');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error adding character');
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('characterModal').style.display = 'none';
+      isEditMode = false;
+      document.getElementById('editBtn').onclick = enableEditMode;
+      document.getElementById('editBtn').textContent = 'Edit';
+      document.getElementById('modalTitle').textContent = 'Character Details';
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Load characters on startup
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchCharacters();
+
+      // Close modal when clicking outside
+      window.onclick = function(event) {
+        const modal = document.getElementById('characterModal');
+        if (event.target === modal) closeModal();
+      };
+    });
+
+    // Hamburger menu code
+    var items = document.querySelectorAll('#i6ril-2');
+    for (var i = 0, len = items.length; i < len; i++) {
+      (function() {
+        var n, t = this, e = 'gjs-collapse', a = 'max-height', o = 0, i = function() {
+          var n = document.createElement('void'), t = {
+            transition: 'transitionend',
+            OTransition: 'oTransitionEnd',
+            MozTransition: 'transitionend',
+            WebkitTransition: 'webkitTransitionEnd'
+          };
+          for (var e in t) if (void 0 !== n.style[e]) return t[e]
+        }(), r = function(n) {
+          o = 1;
+          var t = function(n) {
+            var t = window.getComputedStyle(n),
+              e = t.display,
+              o = parseInt(t[a]);
+            if ('none' !== e && 0 !== o) return n.offsetHeight;
+            n.style.height = 'auto', n.style.display = 'block', n.style.position = 'absolute', n.style.visibility = 'hidden';
+            var i = n.offsetHeight;
+            return n.style.height = '', n.style.display = '', n.style.position = '', n.style.visibility = '', i
+          }(n),
+            e = n.style;
+          e.display = 'block', e.transition = "".concat(a, " 0.25s ease-in-out"), e.overflowY = 'hidden', '' == e[a] && (e[a] = 0), 0 == parseInt(e[a]) ? (e[a] = '0', setTimeout((function() {
+            e[a] = t + 'px'
+          }), 10)) : e[a] = '0'
+        };
+        e in t || t.addEventListener('click', (function(e) {
+          if (e.preventDefault(), !o) {
+            var l = t.closest("[data-gjs=navbar]"),
+              c = null == l ? void 0 : l.querySelector("[data-gjs=navbar-items]");
+            c && r(c), n || (null == c || c.addEventListener(i, (function() {
+              o = 0;
+              var n = c.style;
+              0 == parseInt(n[a]) && (n.display = '', n[a] = '')
+            })), n = 1)
+          }
+        })), t[e] = 1
+      }.bind(items[i]));
+    }
   </script>
 </body>
 
