@@ -1,0 +1,10 @@
+{
+  "name": "characters-app",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "googleapis": "^126.0.0"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "buildCommand": "npm install",
+  "outputDirectory": "src",
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/sheets.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/src/$1"
+    }
+  ],
+  "env": {
+    "GOOGLE_SHEETS_PRIVATE_KEY": "@google-sheets-private-key",
+    "GOOGLE_SHEETS_CLIENT_EMAIL": "@google-sheets-client-email",
+    "GOOGLE_SHEETS_SHEET_ID": "@google-sheets-sheet-id"
+  }
+}
