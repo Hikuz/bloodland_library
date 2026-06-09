@@ -360,6 +360,9 @@ body {
 /* Form group spacing */
 .form-group {
   margin-bottom: 15px;
+  word-wrap: break-word;  
+  overflow-y: auto;     
+  overflow-wrap: break-word;  
 }
 
 .form-group label {
@@ -457,6 +460,8 @@ body {
     max-height: 300px;
     overflow-y: auto;
     white-space: normal;
+     word-wrap: break-word;  
+    overflow-wrap: break-word;  
 }
 
 .markdown-content h1,
@@ -681,6 +686,7 @@ body {
   word-wrap: break-word;  /* Rompe palabras largas */
   max-height: 200px;      /* Altura máxima */
   overflow-y: auto;       /* Scroll vertical si excede */
+  overflow-wrap: break-word;
   line-height: 1.5;
 }
 
