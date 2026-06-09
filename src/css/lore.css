@@ -397,8 +397,6 @@ body {
   background: rgba(0, 0, 0, 0.2);
   border-radius: 4px;
   white-space: pre-wrap;
-  max-height: 200px;
-  overflow-y: auto;
   color: #fff;
   font-size: 14px;
 }
@@ -463,6 +461,7 @@ body {
   background: rgba(0, 0, 0, 0.2);
   padding: 8px;
   border-radius: 4px;
+  max-height: 400px;
   margin: 5px 0;
   max-height: 300px;
   overflow-y: auto;
@@ -483,6 +482,8 @@ body {
 
 .markdown-content p {
   margin-bottom: 12px;
+  overflow: visible;   
+  max-height: none; 
 }
 
 .markdown-content ul,
