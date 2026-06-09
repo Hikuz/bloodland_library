@@ -221,8 +221,8 @@ body {
   margin: 5% auto;
   padding: 20px;
   border-radius: 10px;
-  width: 90%;
-  max-width: 950px;
+  width: 100%;
+  max-width: 1100px;
   color: white;
   position: relative;
 }
@@ -341,6 +341,7 @@ body {
 .form-two-columns {
   display: flex;
   gap: 30px;
+  width: 100%;
 }
 
 .form-column {
@@ -349,20 +350,23 @@ body {
 
 /* Columna izquierda*/
 .form-column:first-child {
-  flex: .8;
+  flex: 0 0 30%;
+  min-width: 0;
+  overflow: hidden;
 }
 
 /* Columna derecha*/
 .form-column:last-child {
-  flex: 1.7;
+  flex: 0 0 65%;
+  min-width: 0;
+  overflow: hidden;
 }
 
 /* Form group spacing */
 .form-group {
   margin-bottom: 15px;
-  word-wrap: break-word;  
-  overflow-y: auto;     
-  overflow-wrap: break-word;  
+  min-width: 0;
+  overflow: hidden;
 }
 
 .form-group label {
@@ -379,11 +383,10 @@ body {
   background: rgba(0,0,0,0.2);
   border-radius: 4px;
   white-space: pre-wrap;  
-  word-wrap: break-word;  
-  max-height: 200px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;  
   color: rgb(255, 255, 255);
-  font-size: 18px;       
-  overflow-y: auto;     
+  font-size: 18px;        
 }
 
 .form-group input,
@@ -460,8 +463,8 @@ body {
     max-height: 300px;
     overflow-y: auto;
     white-space: normal;
-     word-wrap: break-word;  
-    overflow-wrap: break-word;  
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .markdown-content h1,
@@ -669,7 +672,7 @@ body {
   }
   
   .modal-content {
-    max-width: 95%;
+    max-width: 100%;
     margin: 10% auto;
   }
 }
@@ -682,11 +685,11 @@ body {
 
 /* Campo específico para el resumen */
 #display-summary {
-  white-space: pre-wrap;  /* Respeta saltos de línea */
-  word-wrap: break-word;  /* Rompe palabras largas */
-  max-height: 200px;      /* Altura máxima */
-  overflow-y: auto;       /* Scroll vertical si excede */
+  white-space: pre-wrap;
+  word-wrap: break-word;
   overflow-wrap: break-word;
+  max-height: 200px;
+  overflow-y: auto;
   line-height: 1.5;
 }
 
