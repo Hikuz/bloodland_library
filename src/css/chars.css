@@ -68,7 +68,7 @@ body {
   direction: ltr;
   text-decoration: none;
   text-transform: uppercase;
-  background-color: rgba(98, 90, 106, 0.55);
+  background-color: rgb(143, 33, 110);
   border: 2px groove rgb(255, 255, 255);
   margin-right: 5px;
 }
@@ -319,7 +319,6 @@ body {
 }
 
 .character-designer {
-  font-size: 0.85em;
   color: #c9a0dc;
   margin-bottom: 8px;
   font-size: 1em;
@@ -368,7 +367,7 @@ body {
   margin-bottom: 5px;
   font-weight: bold;
   color: rgb(230, 167, 141);
-  font-size: 20px;   
+  font-size: 18px;   
 }
 
 .form-group p {
@@ -391,7 +390,7 @@ body {
   border-radius: 4px;
   border: 1px solid #ddd;
   background-color: rgb(255, 224, 211);
-  font-size: 18px; 
+  font-size: 16px; 
   color: #341e1e;
 }
 
@@ -550,6 +549,77 @@ body {
 .markdown-content th {
     background: rgba(0,0,0,0.3);
     font-weight: bold;
+}
+
+/* ========== BARRA DE BÚSQUEDA ========== */
+.search-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 8px 15px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    background-color: rgba(255,255,255,0.9);
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: rgb(143, 33, 110);
+    background-color: white;
+    box-shadow: 0 0 5px rgba(143,33,110,0.5);
+}
+
+/* ========== CHECKBOXES PARA DESIGNER ========== */
+.designer-checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 10px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+}
+
+.designer-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    cursor: pointer;
+    font-size: 10px;
+    padding: 5px 12px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 20px;
+    transition: all 0.2s;
+}
+
+.designer-checkbox:hover {
+    background: rgba(143,33,110,0.5);
+}
+
+.designer-checkbox input {
+    width: auto;
+    margin: 0;
+    cursor: pointer;
+}
+
+/* Ajustes responsive */
+@media (max-width: 768px) {
+    .controls-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .search-group {
+        width: 100%;
+    }
+    
+    .filter-group {
+        justify-content: center;
+    }
 }
 
 /* Estilos responsive */

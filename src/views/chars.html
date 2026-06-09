@@ -30,17 +30,20 @@
     </div>
   </div>
 
-  <!-- Controls Bar -->
-  <div class="controls-bar">
-    <button class="btn btn-primary" onclick="openAddModal()">Add Character</button>
-    <div class="filter-group">
-      <button class="filter-btn" onclick="filterCharacters('name')">Sort by Name</button>
-      <button class="filter-btn" onclick="filterCharacters('part')">Sort by Story part</button>
-      <button class="filter-btn" onclick="filterCharacters('character role')">Sort by Role</button>
-      <button class="filter-btn" onclick="filterCharacters('designer')">Sort by Creator</button>
-      <button class="filter-btn" onclick="resetFilter()">Reset filters</button>
-    </div>
+<!-- Controls Bar -->
+<div class="controls-bar">
+  <button class="btn btn-primary" onclick="openAddModal()">+ Add Character</button>
+  <div class="search-group">
+    <input type="text" id="search-input" class="search-input" placeholder="Search character" onkeyup="searchCharacters()">
   </div>
+  <div class="filter-group">
+    <button class="filter-btn" onclick="filterCharacters('name')">Sort by Name</button>
+    <button class="filter-btn" onclick="filterCharacters('dimension')">Sort by Universe</button>
+    <button class="filter-btn" onclick="filterCharacters('character role')">Sort by Role</button>
+    <button class="filter-btn" onclick="filterCharacters('designer')">Sort by Creator</button>
+    <button class="filter-btn" onclick="resetFilter()">Reset filters</button>
+  </div>
+</div>
 
   <!-- Characters Container -->
   <div id="characters-container" class="characters-grid">
@@ -62,18 +65,31 @@
   </div>
 
   <script>
-    // ==================== CONFIGURACIÓN DE BASEROW ====================
-    const BASEROW_API_TOKEN = "2KktnPZd4vjoH5MzdptCNalA9cWML1et";           //Token  Baserow
-    const BASEROW_DATABASE_ID = "460686";                    //Database ID
-    const BASEROW_TABLE_ID = "1015025";                       //Table ID
-    const BASEROW_API_BASE = `https://api.baserow.io/api/database/rows/table/${BASEROW_TABLE_ID}/`;
-    const BASEROW_API_PARAMS = `?user_field_names=true`;
-    const BASEROW_API_URL = `${BASEROW_API_BASE}${BASEROW_API_PARAMS}`;
+// ==================== CONFIGURACIÓN DE BASEROW ====================
+const BASEROW_API_TOKEN = "2KktnPZd4vjoH5MzdptCNalA9cWML1et";
+const BASEROW_DATABASE_ID = "460686";
 
-    let currentCharacters = [];
-    let currentFilter = null;
-    let currentCharacterIndex = null;
-    let isEditMode = false;
+// Tabla de personajes
+const CHARACTERS_TABLE_ID = "1015025";
+const CHARACTERS_API_BASE = `https://api.baserow.io/api/database/rows/table/${CHARACTERS_TABLE_ID}/`;
+const CHARACTERS_API_PARAMS = `?user_field_names=true`;
+const CHARACTERS_API_URL = `${CHARACTERS_API_BASE}${CHARACTERS_API_PARAMS}`; 
+
+// Tabla global
+const GLOBAL_TABLE_ID = "1018347";
+const GLOBAL_API_BASE = `https://api.baserow.io/api/database/rows/table/${GLOBAL_TABLE_ID}/`;
+const GLOBAL_API_PARAMS = `?user_field_names=true`;
+const GLOBAL_API_URL = `${GLOBAL_API_BASE}${GLOBAL_API_PARAMS}`; 
+
+let currentCharacters = [];
+let currentUniverses = [];      // Desde tabla global
+let currentDesigners = [];      // Desde tabla global
+let currentFilter = null;
+let currentCharacterIndex = null;
+let isEditMode = false;
+let currentSearchTerm = '';  // Busqueda
+
+    
 
     // ==================== FUNCIONES CRUD ====================
     
@@ -99,31 +115,81 @@
       return response;
     }
 
+    // Obtener datos de la tabla global
+async function fetchGlobalData() {
+    try {
+        let allGlobal = [];
+        let nextUrl = GLOBAL_API_URL;
+        
+        while (nextUrl) {
+            const secureUrl = nextUrl.replace('http://', 'https://');
+            const response = await fetchBaserow(secureUrl);
+            if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+            const data = await response.json();
+            allGlobal = allGlobal.concat(data.results || []);
+            nextUrl = data.next ? data.next.replace('http://', 'https://') : null;
+        }
+        
+        // Extraer valores únicos de DE_Name y UN_Name
+        const designersSet = new Set();
+        const universesSet = new Set();
+        
+        allGlobal.forEach(item => {
+            if (item.DE_Name && item.DE_Name.trim()) {
+                designersSet.add(item.DE_Name.trim());
+            }
+            if (item.UN_Name && item.UN_Name.trim()) {
+                universesSet.add(item.UN_Name.trim());
+            }
+        });
+        
+        currentDesigners = Array.from(designersSet).sort();
+        currentUniverses = Array.from(universesSet).sort();
+        
+        // Valores por defecto si la tabla está vacía
+        if (currentDesigners.length === 0) {
+            currentDesigners = ['Artist', 'Writer', 'Designer', 'Creator'];
+        }
+        if (currentUniverses.length === 0) {
+            currentUniverses = ['Mythyko', 'Contronus', 'Prosperon', 'Destroxyth', 'Perfrecture', 'Mythoka', '???'];
+        }
+        
+        console.log(`Loaded ${currentDesigners.length} designers from global table`);
+        console.log(`Loaded ${currentUniverses.length} universes from global table`);
+        
+    } catch (error) {
+        console.error('Error loading global data:', error);
+    }
+}
+
 // Fetch characters (GET)
 async function fetchCharacters() {
     const container = document.getElementById('characters-container');
     try {
         container.innerHTML = '<div class="loading">Loading characters...</div>';
         
+        // Cargar personajes
         let allCharacters = [];
-        let nextUrl = BASEROW_API_URL; // Ahora es la URL completa con parámetros
+        let nextUrl = CHARACTERS_API_URL;
         
         while (nextUrl) {
             const secureUrl = nextUrl.replace('http://', 'https://');
-            console.log('Fetching:', secureUrl);
-            
             const response = await fetchBaserow(secureUrl);
             if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-            
             const data = await response.json();
             allCharacters = allCharacters.concat(data.results || []);
-            
             nextUrl = data.next ? data.next.replace('http://', 'https://') : null;
         }
         
         currentCharacters = allCharacters;
+        
+        // Cargar datos globales (diseñadores y universos)
+        await fetchGlobalData();
+        
         console.log(`Loaded ${currentCharacters.length} characters`);
-        displayCharacters(currentCharacters);
+        console.log(`Designers: ${currentDesigners.length}, Universes: ${currentUniverses.length}`);
+        
+        applyFiltersAndSearch();
         
     } catch (error) {
         console.error('Error:', error);
@@ -131,75 +197,211 @@ async function fetchCharacters() {
     }
 }
 
-    // Display characters with enhanced cards
-    function displayCharacters(characters) {
-      const container = document.getElementById('characters-container');
-      if (!characters || characters.length === 0) {
+// Aplicar filtros y búsqueda
+function applyFiltersAndSearch() {
+    let filteredCharacters = [...currentCharacters];
+    
+    // Aplicar búsqueda por nombre
+    if (currentSearchTerm) {
+        filteredCharacters = filteredCharacters.filter(character => {
+            const name = (character.Name || character.name || '').toLowerCase();
+            return name.includes(currentSearchTerm.toLowerCase());
+        });
+    }
+    
+    // Aplicar ordenamiento si existe
+    if (currentFilter) {
+        filteredCharacters.sort((a, b) => {
+            let valA = (a[currentFilter] || a[getFieldMapping(currentFilter)] || '').toLowerCase();
+            let valB = (b[currentFilter] || b[getFieldMapping(currentFilter)] || '').toLowerCase();
+            return valA.localeCompare(valB);
+        });
+    }
+    
+    displayCharacters(filteredCharacters);
+}
+
+// Función de búsqueda
+function searchCharacters() {
+    const searchInput = document.getElementById('search-input');
+    currentSearchTerm = searchInput.value;
+    applyFiltersAndSearch();
+}
+
+// Display characters with enhanced cards
+function displayCharacters(characters) {
+    const container = document.getElementById('characters-container');
+    if (!characters || characters.length === 0) {
         container.innerHTML = '<div class="error">No characters found</div>';
         return;
-      }
+    }
 
-      let charactersHTML = '';
-      characters.forEach((character, index) => {
-        // Baserow usa los nombres de campos exactos de tu tabla
-        const name = character.Name || character.name || 'No name';
-        const role = character['Character Role'] || character.role || 'Undefined';
-        const dimension = character['Origin Dimension'] || character.origin || 'Unknown';
-        const part = character.Part || character.part || 'Undefined';
-        const designer = character.Designer || character.designer || 'Undefined';
-        const imageUrl = character.Image || character.image || 'https://i.pinimg.com/474x/19/e1/56/19e156dd3f2d29d0b5e8b081729abe9b.jpg';
+    let charactersHTML = '';
+    characters.forEach((character) => {
+        // Usar los campos EDITABLES
+        const name = character.Name || 'No name';
+        const role = character['Character Role'] || 'Undefined';
+        const dimension = character['Origin Dimension'] || 'Unknown'; 
+        const part = character.Part || 'Undefined';
+        const designer = character.Designer || 'Undefined';  
+        const imageUrl = character.Image || 'https://i.pinimg.com/474x/19/e1/56/19e156dd3f2d29d0b5e8b081729abe9b.jpg';
 
+        // Usar el ID único del personaje en lugar del índice
         charactersHTML += `
-          <div class="character-card" onclick="showCharacterDetails(${index})">
-            <div class="character-card-inner">
-              <img class="character-image" src="${imageUrl}" alt="${escapeHtml(name)}" onerror="this.src='https://i.pinimg.com/474x/19/e1/56/19e156dd3f2d29d0b5e8b081729abe9b.jpg'">
-              <div class="character-info">
-                <div class="character-name">${escapeHtml(name)}</div>
-                <div class="character-role">${escapeHtml(role)}</div>
-                <div class="character-details">
-                  <div class="character-dimension">Dimension: ${escapeHtml(dimension)}</div>
-                  <div class="character-part">Part: <br>${escapeHtml(part)}</div>
+            <div class="character-card" onclick="showCharacterDetailsById('${character.id}')">
+                <div class="character-card-inner">
+                    <img class="character-image" src="${imageUrl}" alt="${escapeHtml(name)}" onerror="this.src='https://i.pinimg.com/474x/19/e1/56/19e156dd3f2d29d0b5e8b081729abe9b.jpg'">
+                    <div class="character-info">
+                        <div class="character-name">${escapeHtml(name)}</div>
+                        <div class="character-role">${escapeHtml(role)}</div>
+                        <div class="character-details">
+                            <div class="character-dimension">Universe: ${escapeHtml(dimension)}</div>
+                            <div class="character-part">Part: <br>${escapeHtml(part)}</div>
+                        </div>
+                        <div class="character-designer">Creator: ${escapeHtml(designer)}</div>
+                    </div>
                 </div>
-                <div class="character-designer">Creator: ${escapeHtml(designer)}</div>
-              </div>
             </div>
-          </div>
         `;
-      });
-      container.innerHTML = charactersHTML;
-    }
+    });
+    container.innerHTML = charactersHTML;
+}
 
-    // Filter characters (ordenamiento local)
-    function filterCharacters(field) {
-      const sorted = [...currentCharacters].sort((a, b) => {
-        let valA = (a[field] || a[getFieldMapping(field)] || '').toLowerCase();
-        let valB = (b[field] || b[getFieldMapping(field)] || '').toLowerCase();
-        return valA.localeCompare(valB);
-      });
-      currentFilter = field;
-      displayCharacters(sorted);
-
-      // Mark active button
-      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-      event.target.classList.add('active');
+// Show character details by ID (nueva versión)
+function showCharacterDetailsById(characterId) {
+    // Buscar el personaje en el array completo por su ID
+    const character = currentCharacters.find(c => c.id == characterId);
+    if (!character) {
+        console.error('Character not found:', characterId);
+        return;
     }
+    
+    // Encontrar el índice real en el array original (para operaciones CRUD)
+    currentCharacterIndex = currentCharacters.findIndex(c => c.id == characterId);
+    isEditMode = false;
 
-    function resetFilter() {
-      displayCharacters(currentCharacters);
-      currentFilter = null;
-      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-    }
+    const modalBody = document.getElementById('modalBody');
+    modalBody.innerHTML = `
+        <div class="form-two-columns">
+            <div class="form-column">
+                <div class="form-group">
+                    <label>Name:</label>
+                    <p id="display-name">${escapeHtml(character.Name || '')}</p>
+                    <input type="text" id="edit-name" class="edit-field" style="display:none;" value="${escapeHtml(character.Name || '')}">
+                </div>
+                <div class="form-group">
+                    <label>Role:</label>
+                    <p id="display-role">${escapeHtml(character['Character Role'] || '')}</p>
+                    <div id="edit-role-container" style="display:none;">${createRoleDropdown(character['Character Role'] || '')}</div>
+                </div>
+                <div class="form-group">
+                    <label>Part:</label>
+                    <p id="display-part">${escapeHtml(character.Part || '')}</p>
+                    <div id="edit-part-container" style="display:none;">${createPartCheckboxes(character.Part || '')}</div>
+                </div>
+                <div class="form-group">
+                    <label>Origin Dimension:</label>
+                    <p id="display-origin">${escapeHtml(character['Origin Dimension'] || '')}</p>
+                    <div id="edit-origin-container" style="display:none;">${createDimensionDropdown(character['Origin Dimension'] || '')}</div>
+                </div>
+            </div>
+            <div class="form-column">
+                <div class="form-group">
+                    <label>Summary:</label>
+                    <div id="display-summary" class="markdown-content" style="white-space: normal;">${formatSummary(character.Summary || '')}</div>
+                    <textarea id="edit-summary" class="edit-field" style="display:none;" rows="6">${escapeHtml(character.Summary || '')}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>Creator:</label>
+                    <p id="display-designer">${escapeHtml(character.Designer || '')}</p>
+                    <div id="edit-designer-container" style="display:none;">${createDesignerCheckboxes(character.Designer || '')}</div>
+                    <input type="hidden" id="edit-designer-value" value="${escapeHtml(character.Designer || '')}">
+                </div>
+                <div class="form-group">
+                    <label>Image URL:</label>
+                    <p id="display-image">${escapeHtml(character.Image || '')}</p>
+                    <input type="text" id="edit-image" class="edit-field" style="display:none;" value="${escapeHtml(character.Image || '')}">
+                </div>
+            </div>
+        </div>
+    `;
 
-    function getFieldMapping(field) {
-      const mappings = {
-        'character role': 'Character Role',
-        'name': 'Name',
-        'part': 'Part',
-        'summary': 'Summary',
-        'designer': 'Designer'
-      };
-      return mappings[field] || field;
+    document.getElementById('characterModal').style.display = 'block';
+    document.getElementById('editBtn').style.display = 'inline-block';
+    document.getElementById('modalTitle').textContent = 'Character Details';
+}
+
+// Filter characters (ordenamiento local)
+function filterCharacters(field) {
+    currentFilter = field;
+    applyFiltersAndSearch();
+
+    // Mark active button
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+}
+
+function resetFilter() {
+    currentFilter = null;
+    currentSearchTerm = '';
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) searchInput.value = '';
+    applyFiltersAndSearch();
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+}
+
+// Función para crear checkboxes de Designer (desde tabla global)
+function createDesignerCheckboxes(currentValue) {
+    if (currentDesigners.length === 0) {
+        return `<input type="text" id="edit-designer" class="edit-field" value="${escapeHtml(currentValue || '')}" placeholder="No designers available">`;
     }
+    
+    const selectedDesigners = currentValue ? currentValue.split(',').map(s => s.trim()) : [];
+    
+    let html = `<div id="edit-designer-container" class="designer-checkbox-group">`;
+    currentDesigners.forEach(designer => {
+        const isChecked = selectedDesigners.includes(designer);
+        html += `
+            <label class="designer-checkbox">
+                <input type="checkbox" value="${escapeHtml(designer)}" ${isChecked ? 'checked' : ''} onchange="updateDesignerValue()">
+                ${escapeHtml(designer)}
+            </label>
+        `;
+    });
+    html += `</div>`;
+    html += `<input type="hidden" id="edit-designer-value" value="${escapeHtml(currentValue || '')}">`;
+    return html;
+}
+
+// Función para actualizar el valor concatenado de Designer
+function updateDesignerValue() {
+    const checkboxes = document.querySelectorAll('#edit-designer-container input[type="checkbox"]');
+    const selectedDesigners = [];
+    checkboxes.forEach(cb => {
+        if (cb.checked) selectedDesigners.push(cb.value);
+    });
+    const designerValue = selectedDesigners.join(', ');
+    const hiddenInput = document.getElementById('edit-designer-value');
+    if (hiddenInput) hiddenInput.value = designerValue;
+}
+
+// Función auxiliar para obtener el valor de Designer
+function getDesignerValue() {
+    const hiddenInput = document.getElementById('edit-designer-value');
+    return hiddenInput ? hiddenInput.value : '';
+}
+
+function getFieldMapping(field) {
+  const mappings = {
+    'character role': 'Character Role',
+    'name': 'Name',
+    'part': 'Part',
+    'summary': 'Summary',
+    'designer': 'Designer',        
+    'dimension': 'Origin Dimension'
+  };
+  return mappings[field] || field;
+}
 
     // Función para crear dropdown de Role
 function createRoleDropdown(currentValue) {
@@ -213,13 +415,16 @@ function createRoleDropdown(currentValue) {
     return html;
 }
 
-// Función para crear dropdown de Origin Dimension
+// Función para crear dropdown de Origin Dimension (desde tabla global)
 function createDimensionDropdown(currentValue) {
-    const options = ['Unknown', 'Destroxyth', 'Mythoka', 'Mythyko', 'Perfrecture', 'Prosperon', 'Contronus']; // dimensions
+    if (currentUniverses.length === 0) {
+        return `<input type="text" id="edit-origin" class="edit-field" value="${escapeHtml(currentValue || '')}" placeholder="No universes available">`;
+    }
+    
     let html = `<select id="edit-origin" class="edit-field">`;
-    options.forEach(opt => {
-        const selected = (opt === currentValue) ? 'selected' : '';
-        html += `<option value="${opt}" ${selected}>${opt}</option>`;
+    currentUniverses.forEach(universe => {
+        const selected = (universe === currentValue) ? 'selected' : '';
+        html += `<option value="${escapeHtml(universe)}" ${selected}>${escapeHtml(universe)}</option>`;
     });
     html += `</select>`;
     return html;
@@ -263,73 +468,16 @@ function getPartValue() {
     return hiddenInput ? hiddenInput.value : '';
 }
 
-// Show character details
-function showCharacterDetails(index) {
-    const character = currentCharacters[index];
-    currentCharacterIndex = index;
-    isEditMode = false;
-
-    const modalBody = document.getElementById('modalBody');
-    modalBody.innerHTML = `
-        <div class="form-two-columns">
-            <div class="form-column">
-                <div class="form-group">
-                    <label>Name:</label>
-                    <p id="display-name">${escapeHtml(character.Name || character.name || '')}</p>
-                    <input type="text" id="edit-name" class="edit-field" style="display:none;" value="${escapeHtml(character.Name || character.name || '')}">
-                </div>
-                <div class="form-group">
-                    <label>Role:</label>
-                    <p id="display-role">${escapeHtml(character['Character Role'] || character.role || '')}</p>
-                    <div id="edit-role-container" style="display:none;">${createRoleDropdown(character['Character Role'] || character.role || '')}</div>
-                </div>
-                <div class="form-group">
-                    <label>Part:</label>
-                    <p id="display-part">${escapeHtml(character.Part || character.part || '')}</p>
-                    <div id="edit-part-container" style="display:none;">${createPartCheckboxes(character.Part || character.part || '')}</div>
-                </div>
-                <div class="form-group">
-                    <label>Designer:</label>
-                    <p id="display-designer">${escapeHtml(character.Designer || character.designer || '')}</p>
-                    <input type="text" id="edit-designer" class="edit-field" style="display:none;" value="${escapeHtml(character.Designer || character.designer || '')}">
-                </div>
-                <div class="form-group">
-                    <label>Origin Dimension:</label>
-                    <p id="display-origin">${escapeHtml(character['Origin Dimension'] || character.origin || '')}</p>
-                    <div id="edit-origin-container" style="display:none;">${createDimensionDropdown(character['Origin Dimension'] || character.origin || '')}</div>
-                </div>
-            </div>
-              <div class="form-column">
-                  <div class="form-group">
-                      <label>Summary:</label>
-                      <div id="display-summary" class="markdown-content" style="white-space: normal;">${formatSummary(character.Summary || character.summary || '')}</div>
-                      <textarea id="edit-summary" class="edit-field" style="display:none;" rows="6">${escapeHtml(character.Summary || character.summary || '')}</textarea>
-                  </div>
-                  <div class="form-group">
-                      <label>Image URL:</label>
-                      <p id="display-image">${escapeHtml(character.Image || character.image || '')}</p>
-                      <input type="text" id="edit-image" class="edit-field" style="display:none;" value="${escapeHtml(character.Image || character.image || '')}">
-                  </div>
-              </div>
-        </div>
-    `;
-
-    document.getElementById('characterModal').style.display = 'block';
-    document.getElementById('editBtn').style.display = 'inline-block';
-    document.getElementById('modalTitle').textContent = 'Character Details';
-}
-
 function enableEditMode() {
     if (isEditMode) return;
     isEditMode = true;
 
     // Ocultar párrafos y mostrar inputs
-    const displayFields = ['name', 'role', 'part', 'designer', 'origin', 'summary', 'image'];
+    const displayFields = ['name', 'role', 'part', 'origin', 'summary', 'image'];
     displayFields.forEach(field => {
         const displayElem = document.getElementById(`display-${field}`);
         let editElem;
         
-        // Para campos especiales que usan contenedores diferentes
         if (field === 'role') {
             editElem = document.getElementById(`edit-role-container`);
         } else if (field === 'part') {
@@ -345,6 +493,14 @@ function enableEditMode() {
             editElem.style.display = 'block';
         }
     });
+    
+    // Manejar Designer (checkboxes)
+    const displayDesigner = document.getElementById('display-designer');
+    const editDesignerContainer = document.getElementById('edit-designer-container');
+    if (displayDesigner && editDesignerContainer) {
+        displayDesigner.style.display = 'none';
+        editDesignerContainer.style.display = 'block';
+    }
 
     document.getElementById('editBtn').textContent = 'Save';
     document.getElementById('editBtn').onclick = saveEdit;
@@ -354,22 +510,22 @@ function enableEditMode() {
 async function saveEdit() {
     const characterId = currentCharacters[currentCharacterIndex].id;
     
-    // Obtener valores de los campos (incluyendo los nuevos dropdowns y checkboxes)
     const roleSelect = document.getElementById('edit-role');
     const originSelect = document.getElementById('edit-origin');
-    const partValue = getPartValue(); // Usa la función auxiliar
+    const partValue = getPartValue();
+    const designerValue = getDesignerValue();
     
     const updatedCharacter = {
         'Name': document.getElementById('edit-name').value,
         'Character Role': roleSelect ? roleSelect.value : document.getElementById('display-role').textContent,
         'Part': partValue || document.getElementById('display-part').textContent,
-        'Designer': document.getElementById('edit-designer').value,
-        'Origin Dimension': originSelect ? originSelect.value : document.getElementById('display-origin').textContent,
+        'Designer': designerValue || document.getElementById('display-designer').textContent,  // ← Editable
+        'Origin Dimension': originSelect ? originSelect.value : document.getElementById('display-origin').textContent,  // ← Editable
         'Summary': document.getElementById('edit-summary').value,
         'Image': document.getElementById('edit-image').value
     };
 
-    const url = `${BASEROW_API_BASE}${characterId}/${BASEROW_API_PARAMS}`;
+    const url = `${CHARACTERS_API_BASE}${characterId}/${CHARACTERS_API_PARAMS}`;
     console.log('PATCH URL:', url);
 
     try {
@@ -393,20 +549,37 @@ async function saveEdit() {
     }
 }
 
-// Delete character (DELETE)
+// Función auxiliar para hacer fetch con headers de Baserow
+async function fetchBaserow(url, options = {}) {
+    const defaultOptions = {
+        headers: {
+            'Authorization': `Token ${BASEROW_API_TOKEN}`,
+            'Content-Type': 'application/json'
+        }
+    };
+    
+    const mergedOptions = {
+        ...defaultOptions,
+        ...options,
+        headers: {
+            ...defaultOptions.headers,
+            ...options.headers
+        }
+    };
+    
+    console.log('Fetching with options:', mergedOptions); // Para debug
+    const response = await fetch(url, mergedOptions);
+    return response;
+}
+
 async function deleteCharacter() {
     if (confirm('Are you sure you want to delete this character? This action cannot be undone.')) {
         const characterId = currentCharacters[currentCharacterIndex].id;
-
-        // Construir URL correctamente: base + id + parámetros
-        const url = `${BASEROW_API_BASE}${characterId}/${BASEROW_API_PARAMS}`;
-        console.log('DELETE URL:', url); // Para debug
-
+        const url = `${CHARACTERS_API_BASE}${characterId}/${CHARACTERS_API_PARAMS}`;
+        
         try {
-            const response = await fetchBaserow(url, {
-                method: 'DELETE'
-            });
-
+            const response = await fetchBaserow(url, { method: 'DELETE' });
+            
             if (response.ok) {
                 alert('Character deleted successfully');
                 await fetchCharacters();
@@ -423,92 +596,97 @@ async function deleteCharacter() {
     }
 }
 
-    // Open modal to add character
-    function openAddModal() {
-      currentCharacterIndex = null;
-      isEditMode = true;
+// Open modal to add character
+function openAddModal() {
+    currentCharacterIndex = null;
+    isEditMode = true;
 
-      const modalBody = document.getElementById('modalBody');
-      modalBody.innerHTML = `
+    const modalBody = document.getElementById('modalBody');
+    modalBody.innerHTML = `
         <div class="form-two-columns">
-          <div class="form-column">
-            <div class="form-group">
-              <label>Name *:</label>
-              <input type="text" id="edit-name" value="">
+            <div class="form-column">
+                <div class="form-group">
+                    <label>Name *:</label>
+                    <input type="text" id="edit-name" value="">
+                </div>
+                <div class="form-group">
+                    <label>Role:</label>
+                    ${createRoleDropdown('')}
+                </div>
+                <div class="form-group">
+                    <label>Part:</label>
+                    ${createPartCheckboxes('')}
+                </div>
+                <div class="form-group">
+                    <label>Origin Dimension:</label>
+                    ${createDimensionDropdown('')}
+                </div>
             </div>
-            <div class="form-group">
-              <label>Role:</label>
-              <input type="text" id="edit-role" value="">
+            <div class="form-column">
+                <div class="form-group">
+                    <label>Summary:</label>
+                    <textarea id="edit-summary" rows="6" style="min-height: 150px;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Creator:</label>
+                    ${createDesignerCheckboxes('')}
+                </div>
+                <div class="form-group">
+                    <label>Image URL:</label>
+                    <input type="text" id="edit-image" value="">
+                </div>
             </div>
-            <div class="form-group">
-              <label>Part:</label>
-              <input type="text" id="edit-part" value="">
-            </div>
-            <div class="form-group">
-              <label>Designer:</label>
-              <input type="text" id="edit-designer" value="">
-            </div>
-            <div class="form-group">
-              <label>Origin Dimension:</label>
-              <input type="text" id="edit-origin" value="">
-            </div>
-          </div>
-          <div class="form-column">
-            <div class="form-group">
-              <label>Summary:</label>
-              <textarea id="edit-summary" rows="6" style="min-height: 150px;"></textarea>
-            </div>
-            <div class="form-group">
-              <label>Image URL:</label>
-              <input type="text" id="edit-image" value="">
-            </div>
-          </div>
         </div>
-      `;
+    `;
 
-      document.getElementById('characterModal').style.display = 'block';
-      document.getElementById('modalTitle').textContent = 'Add Character';
-      document.getElementById('editBtn').textContent = '💾 Save';
-      document.getElementById('editBtn').onclick = saveNewCharacter;
-    }
+    document.getElementById('characterModal').style.display = 'block';
+    document.getElementById('modalTitle').textContent = 'Add Character';
+    document.getElementById('editBtn').textContent = 'Save';
+    document.getElementById('editBtn').onclick = saveNewCharacter;
+}
 
-    // Save new character (POST)
-    async function saveNewCharacter() {
-      const newCharacter = {
+// Save new character (POST)
+async function saveNewCharacter() {
+    const roleSelect = document.getElementById('edit-role');
+    const originSelect = document.getElementById('edit-origin');
+    const partValue = getPartValue();
+    const designerValue = getDesignerValue();
+    
+    const newCharacter = {
         'Name': document.getElementById('edit-name').value,
-        'Character Role': document.getElementById('edit-role').value,
-        'Part': document.getElementById('edit-part').value,
-        'Designer': document.getElementById('edit-designer').value,
-        'Origin Dimension': document.getElementById('edit-origin').value,
+        'Character Role': roleSelect ? roleSelect.value : '',
+        'Part': partValue,
+        'Designer': designerValue,  // ← Editable
+        'Origin Dimension': originSelect ? originSelect.value : '',  // ← Editable
         'Summary': document.getElementById('edit-summary').value,
         'Image': document.getElementById('edit-image').value
-      };
+    };
 
-      if (!newCharacter.Name) {
+    if (!newCharacter.Name) {
         alert('Name is required');
         return;
-      }
+    }
 
-      try {
-        const response = await fetchBaserow(BASEROW_API_URL, {
-          method: 'POST',
-          body: JSON.stringify(newCharacter)
+    try {
+        const response = await fetchBaserow(CHARACTERS_API_URL, {
+            method: 'POST',
+            body: JSON.stringify(newCharacter)
         });
 
         if (response.ok) {
-          alert('Character added successfully');
-          await fetchCharacters();
-          closeModal();
+            alert('Character added successfully');
+            await fetchCharacters();
+            closeModal();
         } else {
-          const errorText = await response.text();
-          console.error('Error response:', errorText);
-          throw new Error('Error adding character');
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error('Error adding character');
         }
-      } catch (error) {
+    } catch (error) {
         console.error('Error:', error);
         alert('Error adding character');
-      }
     }
+}
 
     function closeModal() {
       document.getElementById('characterModal').style.display = 'none';
@@ -524,13 +702,6 @@ async function deleteCharacter() {
       div.textContent = text;
       return div.innerHTML;
     }
-
-    function escapeHtml(text) {
-  if (!text) return '';
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
 
 // ========== FUNCIONES PARA MARKDOWN ==========
 

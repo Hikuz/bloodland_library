@@ -3,11 +3,12 @@
 
 <head>
   <title>The nutshack - Bloodland</title>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="robots" content="index,follow">
-  <meta name="generator" content="GrapesJS Studio">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="robots" content="index,follow" />
+  <meta name="generator" content="GrapesJS Studio" />
   <link rel="stylesheet" href="css/index.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 
 <body id="ib3c">
@@ -19,27 +20,292 @@
         <div class="navbar-burger-line"></div>
       </div>
       <div data-gjs="navbar-items" class="navbar-items-c">
-        <nav id="ipns3" class="navbar-menu"><a id="isc29" href="views/chars.html" title="chars"
-            class="navbar-menu-link">Characters</a><a id="i9zce" title="universes" href="views/universes.html"
-            class="navbar-menu-link">Universes</a><a id="iggxa" title="lore" href="views/lore.html"
-            class="navbar-menu-link">Lore</a><a id="ikeje" href="index.html" title="index"
-            class="navbar-menu-link">Main</a></nav>
+        <nav id="ipns3" class="navbar-menu">
+          <a id="isc29" href="views/chars.html" title="chars" class="navbar-menu-link">Characters</a>
+          <a id="i9zce" title="universes" href="views/universes.html" class="navbar-menu-link">Universes</a>
+          <a id="iggxa" title="lore" href="views/lore.html" class="navbar-menu-link">Lore</a>
+          <a id="ikeje" href="index.html" title="index" class="navbar-menu-link">Main</a>
+        </nav>
       </div>
     </div>
   </div>
+
   <div id="iilo">
-    <div id="ig9vh">Bloodland!!!</div>
+    <div id="iilo-5">
+      <div id="ig9vh-4-2">Bloodland</div>
+    </div>
+    <div id="iilo-2">
+      <div id="ikrex">This is Bloodland, an universe we made together!!!</div>
+    </div>
+
+<!-- PART 1 -->
+<div id="iilo-2-4-2">
+  <div style="display: flex; flex-direction: column; width: 100%;">
+    <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+      <div id="ikrex-3-2-2">About Part 1:</div>
+      <button class="btn-edit" onclick="openEditModal('part_1')">Edit</button>
+    </div>
+    <div id="desc1-content" class="markdown-content">Loading...</div>
   </div>
-  <div id="iilo-2">
-    <div id="ikrex">This is Bloodland, the many lands made of blood</div><img src="https://scontent-mty2-1.xx.fbcdn.net/v/t1.6435-9/100947245_2757821311010544_8319536619413569536_n.jpg?stp=dst-jpg_tt6&amp;cstp=mx276x328&amp;ctp=s276x328&amp;_nc_cat=108&amp;ccb=1-7&amp;_nc_sid=bd9a62&amp;_nc_ohc=e5mc2NN_FN4Q7kNvwGK6HvP&amp;_nc_oc=AdqSQlbdDSIqG-SWsKpMVfCWT8DDzGrYNlwlNjAP4tZSbbrj_ydQXkMBociQp0fN7DU&amp;_nc_zt=23&amp;_nc_ht=scontent-mty2-1.xx&amp;_nc_gid=D8Kw4y0Qru7JV2GjXgMVAQ&amp;_nc_ss=7a2a8&amp;oh=00_Af95z6IodoaTjYN-XZFlt05KQp678Pyu6AcDE4qv6FKiIw&amp;oe=6A4C0D69" id="izxot"/>
+</div>
+
+<!-- PART 2 -->
+<div id="iilo-2-4">
+  <div style="display: flex; flex-direction: column; width: 100%;">
+    <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+      <div id="ikrex-3-2">About Part 2:</div>
+      <button class="btn-edit" onclick="openEditModal('part_2')">Edit</button>
+    </div>
+    <div id="desc2-content" class="markdown-content">Loading...</div>
   </div>
+</div>
+
+    <div id="iilo-2-3">
+      <img src="https://scontent-mty2-1.xx.fbcdn.net/v/t1.6435-9/100947245_2757821311010544_8319536619413569536_n.jpg?stp=dst-jpg_tt6&amp;cstp=mx276x328&amp;ctp=s276x328&amp;_nc_cat=108&amp;ccb=1-7&amp;_nc_sid=bd9a62&amp;_nc_ohc=e5mc2NN_FN4Q7kNvwGK6HvP&amp;_nc_oc=AdqSQlbdDSIqG-SWsKpMVfCWT8DDzGrYNlwlNjAP4tZSbbrj_ydQXkMBociQp0fN7DU&amp;_nc_zt=23&amp;_nc_ht=scontent-mty2-1.xx&amp;_nc_gid=D8Kw4y0Qru7JV2GjXgMVAQ&amp;_nc_ss=7a2a8&amp;oh=00_Af95z6IodoaTjYN-XZFlt05KQp678Pyu6AcDE4qv6FKiIw&amp;oe=6A4C0D69" id="izxot" />
+    </div>
+  </div>
+
+  <!-- Modal for editing descriptions -->
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <h2 id="modalTitle">Edit Description</h2>
+      <div id="modalBody">
+        <div class="form-group">
+          <label>Description:</label>
+          <textarea id="edit-description" rows="10" placeholder="Write the description..."></textarea>
+        </div>
+      </div>
+      <div class="modal-buttons">
+        <button class="btn btn-primary" onclick="saveDescription()">Save</button>
+        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <script>
+    // ==================== CONFIGURACIÓN DE BASEROW ====================
+    const BASEROW_API_TOKEN = "2KktnPZd4vjoH5MzdptCNalA9cWML1et";
+    const BASEROW_DATABASE_ID = "460686";
+    const INDEX_TABLE_ID = "1018415";  // ← Reemplaza con el ID de tu tabla "index"
+    
+    const INDEX_API_BASE = `https://api.baserow.io/api/database/rows/table/${INDEX_TABLE_ID}/`;
+    const INDEX_API_PARAMS = `?user_field_names=true`;
+    const INDEX_API_URL = `${INDEX_API_BASE}${INDEX_API_PARAMS}`;
+
+    let currentData = {};
+    let currentField = null;
+    let currentRecordId = null;
+
+    // ==================== FUNCIONES AUXILIARES ====================
+
+    async function fetchBaserow(url, options = {}) {
+      const defaultOptions = {
+        headers: {
+          'Authorization': `Token ${BASEROW_API_TOKEN}`,
+          'Content-Type': 'application/json'
+        }
+      };
+      
+      const mergedOptions = {
+        ...defaultOptions,
+        ...options,
+        headers: {
+          ...defaultOptions.headers,
+          ...options.headers
+        }
+      };
+      
+      const response = await fetch(url, mergedOptions);
+      return response;
+    }
+
+    // Convertir Markdown a HTML
+    function markdownToHtml(text) {
+      if (!text) return '';
+      if (typeof marked !== 'undefined') {
+        marked.setOptions({ breaks: true, gfm: true });
+        return marked.parse(text);
+      }
+      return escapeHtml(text).replace(/\n/g, '<br>');
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ==================== CARGAR DATOS DESDE BASEROW ====================
+
+    async function fetchIndexData() {
+      try {
+        let allData = [];
+        let nextUrl = INDEX_API_URL;
+        
+        while (nextUrl) {
+          const secureUrl = nextUrl.replace('http://', 'https://');
+          const response = await fetchBaserow(secureUrl);
+          if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+          const data = await response.json();
+          allData = allData.concat(data.results || []);
+          nextUrl = data.next ? data.next.replace('http://', 'https://') : null;
+        }
+        
+        // Organizar datos por campo Field
+        allData.forEach(item => {
+          currentData[item.Field] = {
+            id: item.id,
+            desc: item.Desc || ''
+          };
+        });
+        
+        // Actualizar el HTML
+        updateDisplay();
+        
+      } catch (error) {
+        console.error('Error loading index data:', error);
+        document.getElementById('desc1-content').innerHTML = '<div class="error">Error loading content</div>';
+        document.getElementById('desc2-content').innerHTML = '<div class="error">Error loading content</div>';
+      }
+    }
+
+    function updateDisplay() {
+      // Actualizar Desc 1 (part_1)
+      if (currentData['part_1']) {
+        const desc1Content = document.getElementById('desc1-content');
+        if (desc1Content) {
+          desc1Content.innerHTML = markdownToHtml(currentData['part_1'].desc);
+        }
+      } else {
+        document.getElementById('desc1-content').innerHTML = '<div class="error">No content found for part_1</div>';
+      }
+      
+      // Actualizar Desc 2 (part_2)
+      if (currentData['part_2']) {
+        const desc2Content = document.getElementById('desc2-content');
+        if (desc2Content) {
+          desc2Content.innerHTML = markdownToHtml(currentData['part_2'].desc);
+        }
+      } else {
+        document.getElementById('desc2-content').innerHTML = '<div class="error">No content found for part_2</div>';
+      }
+    }
+
+    // ==================== MODAL PARA EDITAR ====================
+
+    function openEditModal(field) {
+      currentField = field;
+      const record = currentData[field];
+      
+      if (!record) {
+        alert('Record not found');
+        return;
+      }
+      
+      currentRecordId = record.id;
+      
+      const modalBody = document.getElementById('modalBody');
+      const textarea = document.getElementById('edit-description');
+      if (textarea) {
+        textarea.value = record.desc || '';
+      }
+      
+      document.getElementById('editModal').style.display = 'block';
+      document.getElementById('modalTitle').textContent = `Edit Description - ${field === 'part_1' ? 'Part 1' : 'Part 2'}`;
+    }
+
+    async function saveDescription() {
+      const newDescription = document.getElementById('edit-description').value;
+      
+      const updatedRecord = {
+        'Desc': newDescription
+      };
+      
+      const url = `${INDEX_API_BASE}${currentRecordId}/${INDEX_API_PARAMS}`;
+      
+      try {
+        const response = await fetchBaserow(url, {
+          method: 'PATCH',
+          body: JSON.stringify(updatedRecord)
+        });
+        
+        if (response.ok) {
+          // Actualizar caché local
+          currentData[currentField].desc = newDescription;
+          updateDisplay();
+          closeModal();
+          alert('Description updated successfully');
+        } else {
+          const errorText = await response.text();
+          console.error('Error response:', errorText);
+          throw new Error('Error updating description');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error updating description');
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('editModal').style.display = 'none';
+      currentField = null;
+      currentRecordId = null;
+    }
+
+    // ==================== INICIALIZACIÓN ====================
+
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchIndexData();
+      
+      window.onclick = function(event) {
+        const modal = document.getElementById('editModal');
+        if (event.target === modal) closeModal();
+      };
+    });
+
+    // ==================== HAMBURGER MENU ====================
     var items = document.querySelectorAll('#i6ril');
-          for (var i = 0, len = items.length; i < len; i++) {
-            (function(){
-var n,t=this,e='gjs-collapse',a='max-height',o=0,i=function(){var n=document.createElement('void'),t={transition:'transitionend',OTransition:'oTransitionEnd',MozTransition:'transitionend',WebkitTransition:'webkitTransitionEnd'};for(var e in t)if(void 0!==n.style[e])return t[e]}(),r=function(n){o=1;var t=function(n){var t=window.getComputedStyle(n),e=t.display,o=parseInt(t[a]);if('none'!==e&&0!==o)return n.offsetHeight;n.style.height='auto',n.style.display='block',n.style.position='absolute',n.style.visibility='hidden';var i=n.offsetHeight;return n.style.height='',n.style.display='',n.style.position='',n.style.visibility='',i}(n),e=n.style;e.display='block',e.transition="".concat(a," 0.25s ease-in-out"),e.overflowY='hidden',''==e[a]&&(e[a]=0),0==parseInt(e[a])?(e[a]='0',setTimeout((function(){e[a]=t+'px'}),10)):e[a]='0'};e in t||t.addEventListener('click',(function(e){if(e.preventDefault(),!o){var l=t.closest("[data-gjs=navbar]"),c=null==l?void 0:l.querySelector("[data-gjs=navbar-items]");c&&r(c),n||(null==c||c.addEventListener(i,(function(){o=0;var n=c.style;0==parseInt(n[a])&&(n.display='',n[a]='')})),n=1)}})),t[e]=1
-}.bind(items[i]))();
+    for (var i = 0, len = items.length; i < len; i++) {
+      (function() {
+        var n, t = this, e = 'gjs-collapse', a = 'max-height', o = 0, i = function() {
+          var n = document.createElement('void'), t = {
+            transition: 'transitionend',
+            OTransition: 'oTransitionEnd',
+            MozTransition: 'transitionend',
+            WebkitTransition: 'webkitTransitionEnd'
+          };
+          for (var e in t) if (void 0 !== n.style[e]) return t[e]
+        }(), r = function(n) {
+          o = 1;
+          var t = function(n) {
+            var t = window.getComputedStyle(n),
+              e = t.display,
+              o = parseInt(t[a]);
+            if ('none' !== e && 0 !== o) return n.offsetHeight;
+            n.style.height = 'auto', n.style.display = 'block', n.style.position = 'absolute', n.style.visibility = 'hidden';
+            var i = n.offsetHeight;
+            return n.style.height = '', n.style.display = '', n.style.position = '', n.style.visibility = '', i
+          }(n),
+            e = n.style;
+          e.display = 'block', e.transition = "".concat(a, " 0.25s ease-in-out"), e.overflowY = 'hidden', '' == e[a] && (e[a] = 0), 0 == parseInt(e[a]) ? (e[a] = '0', setTimeout((function() {
+            e[a] = t + 'px'
+          }), 10)) : e[a] = '0'
+        };
+        e in t || t.addEventListener('click', (function(e) {
+          if (e.preventDefault(), !o) {
+            var l = t.closest("[data-gjs=navbar]"),
+              c = null == l ? void 0 : l.querySelector("[data-gjs=navbar-items]");
+            c && r(c), n || (null == c || c.addEventListener(i, (function() {
+              o = 0;
+              var n = c.style;
+              0 == parseInt(n[a]) && (n.display = '', n[a] = '')
+            })), n = 1)
           }
+        })), t[e] = 1
+      }.bind(items[i]));
+    }
   </script>
 </body>
 

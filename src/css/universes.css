@@ -351,12 +351,12 @@ body {
 .btn-add-location {
   margin-top: 12px;
   padding: 6px 12px;
-  background-color: #28a745;
+  background-color: #4428a7;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 16px;
   transition: all 0.2s;
 }
 
@@ -649,6 +649,35 @@ body {
   cursor: not-allowed;          
   font-weight: bold;            
   font-style: italic;        
+}
+
+/* Botón de editar universo */
+.btn-edit-universe {
+    background-color: #ffc107;
+    color: #000;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-left: 10px;
+}
+
+.btn-edit-universe:hover {
+    background-color: #e0a800;
+    transform: scale(1.05);
+}
+
+.universe-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 25px;
+    background: rgba(0,0,0,0.4);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 /* ========== RESPONSIVE ========== */
