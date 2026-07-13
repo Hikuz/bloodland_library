@@ -38,9 +38,25 @@
   </div>
   <div class="filter-group">
     <button class="filter-btn" onclick="filterCharacters('name')">Sort by Name</button>
-    <button class="filter-btn" onclick="filterCharacters('dimension')">Sort by Universe</button>
-    <button class="filter-btn" onclick="filterCharacters('character role')">Sort by Role</button>
-    <button class="filter-btn" onclick="filterCharacters('designer')">Sort by Creator</button>
+    <select id="filter-role" class="filter-dropdown" onchange="filterByRole()">
+      <option value="">All Roles</option>
+      <option value="Antagonist">Antagonist</option>
+      <option value="Divine Entity">Divine Entity</option>
+      <option value="Divine Servant">Divine Servant</option>
+      <option value="Eldritch Entity">Eldritch Entity</option>
+      <option value="Element Guardian">Element Guardian</option>
+      <option value="Protagonist">Protagonist</option>
+      <option value="Living Legend">Living Legend</option>
+      <option value="Secondary">Secondary</option>
+      <option value="Tertiary">Tertiary</option>
+      <option value="TBA">TBA</option>
+    </select>
+    <select id="filter-universe" class="filter-dropdown" onchange="filterByUniverse()">
+      <option value="">All Universes</option>
+    </select>
+    <select id="filter-creator" class="filter-dropdown" onchange="filterByCreator()">
+      <option value="">All Creators</option>
+    </select>
     <button class="filter-btn" onclick="resetFilter()">Reset filters</button>
   </div>
 </div>
@@ -87,7 +103,10 @@ let currentDesigners = [];      // Desde tabla global
 let currentFilter = null;
 let currentCharacterIndex = null;
 let isEditMode = false;
-let currentSearchTerm = '';  // Busqueda
+let currentSearchTerm = '';      // Busqueda
+let currentRoleFilter = '';      // Filtro por rol
+let currentUniverseFilter = '';  // Filtro por universo
+let currentCreatorFilter = '';   // Filtro por creador
 
     
 
@@ -115,7 +134,7 @@ let currentSearchTerm = '';  // Busqueda
       return response;
     }
 
-    // Obtener datos de la tabla global
+// Obtener datos de la tabla global
 async function fetchGlobalData() {
     try {
         let allGlobal = [];
@@ -146,19 +165,37 @@ async function fetchGlobalData() {
         currentDesigners = Array.from(designersSet).sort();
         currentUniverses = Array.from(universesSet).sort();
         
-        // Valores por defecto si la tabla está vacía
-        if (currentDesigners.length === 0) {
-            currentDesigners = ['Artist', 'Writer', 'Designer', 'Creator'];
-        }
-        if (currentUniverses.length === 0) {
-            currentUniverses = ['Mythyko', 'Contronus', 'Prosperon', 'Destroxyth', 'Perfrecture', 'Mythoka', '???'];
-        }
+        // Llenar los dropdowns de filtros
+        populateFilterDropdowns();
         
         console.log(`Loaded ${currentDesigners.length} designers from global table`);
         console.log(`Loaded ${currentUniverses.length} universes from global table`);
         
     } catch (error) {
         console.error('Error loading global data:', error);
+    }
+}
+
+// Llenar los dropdowns de filtros
+function populateFilterDropdowns() {
+    // Llenar dropdown de Universos
+    const universeSelect = document.getElementById('filter-universe');
+    if (universeSelect) {
+        let options = '<option value="">All Universes</option>';
+        currentUniverses.forEach(universe => {
+            options += `<option value="${escapeHtml(universe)}">${escapeHtml(universe)}</option>`;
+        });
+        universeSelect.innerHTML = options;
+    }
+    
+    // Llenar dropdown de Creadores
+    const creatorSelect = document.getElementById('filter-creator');
+    if (creatorSelect) {
+        let options = '<option value="">All Creators</option>';
+        currentDesigners.forEach(designer => {
+            options += `<option value="${escapeHtml(designer)}">${escapeHtml(designer)}</option>`;
+        });
+        creatorSelect.innerHTML = options;
     }
 }
 
@@ -209,11 +246,39 @@ function applyFiltersAndSearch() {
         });
     }
     
-    // Aplicar ordenamiento si existe
-    if (currentFilter) {
+    // Filtrar por Role (coincidencia exacta)
+    if (currentRoleFilter) {
+        filteredCharacters = filteredCharacters.filter(character => {
+            const role = character['Character Role'] || '';
+            return role === currentRoleFilter;
+        });
+    }
+    
+    // Filtrar por Universe (coincidencia parcial - busca en Origin Dimension)
+    if (currentUniverseFilter) {
+        filteredCharacters = filteredCharacters.filter(character => {
+            const universe = character['Origin Dimension'] || '';
+            return universe === currentUniverseFilter;
+        });
+    }
+    
+    // Filtrar por Creator (coincidencia parcial - busca en Designer, maneja múltiples)
+    if (currentCreatorFilter) {
+        filteredCharacters = filteredCharacters.filter(character => {
+            const designers = character.Designer || '';
+            // Si el campo está vacío, no coincide
+            if (!designers) return false;
+            // Dividir por comas y buscar coincidencia exacta
+            const designerList = designers.split(',').map(d => d.trim());
+            return designerList.includes(currentCreatorFilter);
+        });
+    }
+    
+    // Aplicar ordenamiento por nombre (siempre ordenado alfabéticamente)
+    if (currentFilter === 'name') {
         filteredCharacters.sort((a, b) => {
-            let valA = (a[currentFilter] || a[getFieldMapping(currentFilter)] || '').toLowerCase();
-            let valB = (b[currentFilter] || b[getFieldMapping(currentFilter)] || '').toLowerCase();
+            let valA = (a.Name || a.name || '').toLowerCase();
+            let valB = (b.Name || b.name || '').toLowerCase();
             return valA.localeCompare(valB);
         });
     }
@@ -225,6 +290,27 @@ function applyFiltersAndSearch() {
 function searchCharacters() {
     const searchInput = document.getElementById('search-input');
     currentSearchTerm = searchInput.value;
+    applyFiltersAndSearch();
+}
+
+// Filtrar por Role
+function filterByRole() {
+    const select = document.getElementById('filter-role');
+    currentRoleFilter = select.value;
+    applyFiltersAndSearch();
+}
+
+// Filtrar por Universe
+function filterByUniverse() {
+    const select = document.getElementById('filter-universe');
+    currentUniverseFilter = select.value;
+    applyFiltersAndSearch();
+}
+
+// Filtrar por Creator
+function filterByCreator() {
+    const select = document.getElementById('filter-creator');
+    currentCreatorFilter = select.value;
     applyFiltersAndSearch();
 }
 
@@ -344,8 +430,23 @@ function filterCharacters(field) {
 function resetFilter() {
     currentFilter = null;
     currentSearchTerm = '';
+    currentRoleFilter = '';
+    currentUniverseFilter = '';
+    currentCreatorFilter = '';
+    
     const searchInput = document.getElementById('search-input');
     if (searchInput) searchInput.value = '';
+    
+    // Resetear dropdowns
+    const roleSelect = document.getElementById('filter-role');
+    if (roleSelect) roleSelect.value = '';
+    
+    const universeSelect = document.getElementById('filter-universe');
+    if (universeSelect) universeSelect.value = '';
+    
+    const creatorSelect = document.getElementById('filter-creator');
+    if (creatorSelect) creatorSelect.value = '';
+    
     applyFiltersAndSearch();
     document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
 }

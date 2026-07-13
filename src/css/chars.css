@@ -732,3 +732,31 @@ select.edit-field:focus {
     outline: none;
     border-color: rgb(143, 33, 110);
 }
+
+/* ========== FILTROS DROPDOWN ========== */
+.filter-dropdown {
+  padding: 8px 15px;
+  background-color: #444;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 14px;
+  min-width: 120px;
+}
+
+.filter-dropdown:hover {
+  background-color: rgb(143, 33, 110);
+}
+
+.filter-dropdown:focus {
+  outline: none;
+  border: 2px solid white;
+  background-color: rgb(143, 33, 110);
+}
+
+.filter-dropdown option {
+  background-color: #444;
+  color: white;
+}
